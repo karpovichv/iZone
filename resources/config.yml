@@ -1,0 +1,14 @@
+#Config file of iZone plugin
+
+#if normal player can create private areas
+non-op-create: false
+
+#Protect from exploxion
+protect-from-exploxion: true
+
+#Explosion Radius Protection
+explosion-radius: 8
+
+#Default Area Size
+default-size: 10
+

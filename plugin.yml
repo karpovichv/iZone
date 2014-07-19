@@ -1,0 +1,19 @@
+#name, main, version and api are required
+name: iZone
+main: iZone\MainClass
+version: 2.0.0
+api: [1.1.0]
+
+load: POSTWORLD
+author: InusualZ
+description: Protect Multiple Zone
+website:
+commands:
+ izone:
+  description: iZone Command
+  usage: "Usage: /izone"
+  permission: izone.command.izone
+permissions:
+ izone.command.izone:
+  description: "Allows the user to run the izone's command"
+  default: true

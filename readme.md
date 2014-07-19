@@ -1,11 +1,9 @@
+PocketMine-MP Plugin. Protect Multiple Lands with this plugins
+
 ### Config
 
 | Configuration | Type | Default | Description |
 | :---: | :---: | :---: | :--- |
-| private-area-msg | string | __[iZone] This is a private area__ | This message is used when you are destroying or placing a block in a private area. |
-| explosion-protection-msg | string | __[iZone] Someone is trying to blow up your private area.__ | This message is used when attempting to destroy a private area that is not yours. |
-| private-area-creation-msg | string | __[iZone] The private area has been created.__ | This message is used when a private area is created. |
-| private-area-removed-msg | string | __[iZone] The private area has been removed__ | This message is used when a private area is removed. |
 | non-op-create | boolean | __false__ | This option if true will allow players no ops, that could create private areaame. |
 | explosion-protection | boolean | __true__ | This option allows you to protect private area of an explosion. |
 | explosion-radius-protection | integer | __8__ | This will be the radius of the explosion protection. |

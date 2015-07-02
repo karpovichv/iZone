@@ -19,7 +19,7 @@ use iZone\iZone;
 use iZone\Zone;
 use pocketmine\event\plugin\PluginEvent;
 
-class iZoneEvent extends PluginEvent
+abstract class iZoneEvent extends PluginEvent
 {
 
     private $_zone;

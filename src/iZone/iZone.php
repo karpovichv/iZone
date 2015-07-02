@@ -79,10 +79,12 @@ class iZone extends PluginBase implements CommandExecutor
             case "pos1":
                 $this->positions1[spl_object_hash($sender)] = Position::fromObject($sender, $sender->getLevel());
                 return true;
+            break;
 
             case "pos2":
                 $this->positions2[spl_object_hash($sender)] = Position::fromObject($sender, $sender->getLevel());
                 return true;
+            break;
 
             case "create":
                 if(!$sender->isOp() && !$this->getConfig()->get("non-op-create", false))
@@ -99,7 +101,7 @@ class iZone extends PluginBase implements CommandExecutor
                 }
 
 
-                if(count($args) == 1)
+                if(count($args) == 0)
                 {
                     if(isset($this->positions1[spl_object_hash($sender)]) && isset($this->positions2[spl_object_hash($sender)]))
                     {
@@ -110,7 +112,7 @@ class iZone extends PluginBase implements CommandExecutor
                         }
 
                         $this->zones[$name] = $zone;
-                        $sender->sendMessage("[iZone] The zone have been created");
+                        $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                         unset($this->positions1[spl_object_hash($sender)]);
                         unset($this->positions2[spl_object_hash($sender)]);
                         return true;
@@ -127,10 +129,10 @@ class iZone extends PluginBase implements CommandExecutor
                     }
 
                     $this->zones[$name] = $zone;
-                    $sender->sendMessage("[iZone] You have successfully created a private zone");
+                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                     return true;
                 }
-                elseif(count($args) == 2)
+                elseif(count($args) == 1)
                 {
                     $radius = intval(array_shift($args));
                     $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
@@ -143,10 +145,10 @@ class iZone extends PluginBase implements CommandExecutor
                     }
 
                     $this->zones[$name] = $zone;
-                    $sender->sendMessage("[iZone] You have successfully created a private zone");
+                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                     return true;
                 }
-                elseif(count($args) == 4)
+                elseif(count($args) == 3)
                 {
                     $x = intval(array_shift($args));
                     $y = intval(array_shift($args));
@@ -161,10 +163,10 @@ class iZone extends PluginBase implements CommandExecutor
                     }
 
                     $this->zones[$name] = $zone;
-                    $sender->sendMessage("[iZone] You have successfully created a private zone");
+                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                     return true;
                 }
-                elseif(count($args) == 7)
+                elseif(count($args) == 6)
                 {
 
                     $x = intval(array_shift($args));
@@ -185,7 +187,7 @@ class iZone extends PluginBase implements CommandExecutor
                     }
 
                     $this->zones[$name] = $zone;
-                    $sender->sendMessage("[iZone] You have successfully created a private zone");
+                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
 
                     return true;
                 }
@@ -195,7 +197,7 @@ class iZone extends PluginBase implements CommandExecutor
                 $name = array_shift($args);
                 if(!isset($this->zones[$name]))
                 {
-                    $sender->sendMessage("The zone {$name} doesn't exist");
+                    $sender->sendMessage("[iZone] The zone {$name} doesn't exist");
                     return true;
                 }
 
@@ -209,7 +211,7 @@ class iZone extends PluginBase implements CommandExecutor
                     $owner = $this->zones[$name]->getOwner();
                     unset($this->zones[$name]);
 
-                    $owner->sendMessage($this->getConfig()->get("[iZone] The zone {$name} have been removed."));
+                    $owner->sendMessage("[iZone] The zone {$name} have been removed.");
                     if($owner->getName() !== $sender->getName())
                         $sender->sendMessage("[iZone] The zone {$name} have been removed");
                     return true;
@@ -217,6 +219,7 @@ class iZone extends PluginBase implements CommandExecutor
 
                 $sender->sendMessage("[iZone] You don't have the right to do that");
                 return true;
+            break;
 
             case "set":
 
@@ -266,6 +269,7 @@ class iZone extends PluginBase implements CommandExecutor
 
                 $sender->sendMessage("[iZone] You don't have right to do that");
                 return true;
+            break;
 
             case "unset":
                 $name = array_shift($args);
@@ -314,11 +318,13 @@ class iZone extends PluginBase implements CommandExecutor
 
                 $sender->sendMessage("[iZone] You don't have permission to do that");
                 return true;
+            break;
 
 
             case "coord":
                 $sender->sendMessage("[iZone] Coordinates: X: {$sender->x} Y: {$sender->y} Z: {$sender->z}");
                 return true;
+            break;
 
             case "help":
                 $sender->sendMessage("Usage: /izone <command> [parameters...] \{optional...\}");
@@ -330,6 +336,7 @@ class iZone extends PluginBase implements CommandExecutor
                 $sender->sendMessage("Usage: /izone unset [zone] [player] [rank]");
                 $sender->sendMessage("Usage: /izone coord");
                 return true;
+            break;
         }
 
         return false;

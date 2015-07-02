@@ -17,10 +17,13 @@ namespace iZone\Event;
 
 use iZone\iZone;
 use iZone\Zone;
+use pocketmine\event\Cancellable;
 use pocketmine\Player;
 
-class ZoneRemovedEvent extends iZoneEvent
+class ZoneRemovedEvent extends iZoneEvent implements Cancellable
 {
+    public static $handlerList = null;
+
     private $_remover;
 
     public function __construct(iZone $plugin, Zone $zone, Player $remover)

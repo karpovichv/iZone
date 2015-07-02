@@ -17,10 +17,13 @@ namespace iZone\Event;
 
 use iZone\iZone;
 use iZone\Zone;
+use pocketmine\event\Cancellable;
 use pocketmine\Player;
 
-class ZoneSetPermissionEvent extends iZoneEvent
+class ZoneSetPermissionEvent extends iZoneEvent implements Cancellable
 {
+    public static $handlerList = null;
+
     private $_player;
     private $_permission;
 

@@ -15,8 +15,15 @@
 namespace iZone\Event;
 
 
-class ZoneRemovePermissionEvent extends iZoneEvent
+use iZone\iZone;
+use iZone\Zone;
+use pocketmine\event\Cancellable;
+use pocketmine\Player;
+
+class ZoneRemovePermissionEvent extends iZoneEvent implements Cancellable
 {
+    public static $handlerList = null;
+
     private $_player;
     private $_permission;
 

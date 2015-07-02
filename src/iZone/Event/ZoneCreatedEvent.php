@@ -15,8 +15,13 @@
 namespace iZone\Event;
 
 
-class ZoneCreatedEvent extends iZoneEvent
+use iZone\iZone;
+use iZone\Zone;
+use pocketmine\event\Cancellable;
+
+class ZoneCreatedEvent extends iZoneEvent implements Cancellable
 {
+    public static $handlerList = null;
 
     public function __construct(iZone $plugin, Zone $zone)
     {

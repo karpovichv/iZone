@@ -2,6 +2,11 @@
 
 namespace iZone;
 
+use iZone\Event\ZoneCreatedEvent;
+use iZone\Event\ZoneRemovedEvent;
+use iZone\Event\ZoneRemovePermissionEvent;
+use iZone\Event\ZoneSetPermission;
+use iZone\Event\ZoneSetPermissionEvent;
 use iZone\Task\PermissionMember;
 use pocketMine\command\Command;
 use pocketmine\command\CommandExecutor;
@@ -82,7 +87,7 @@ class iZone extends PluginBase implements CommandExecutor
             case "create":
                 if(!$sender->isOp() && !$this->getConfig()->get("non-op-create", false))
                 {
-                    $sender->sendMessage("[iZone] You don't have the right for create a private zone");
+                    $sender->sendMessage("[iZone] You don't have the right to create a private zone");
                     return true;
                 }
 
@@ -98,7 +103,13 @@ class iZone extends PluginBase implements CommandExecutor
                 {
                     if(isset($this->positions1[spl_object_hash($sender)]) && isset($this->positions2[spl_object_hash($sender)]))
                     {
-                        $this->zones[$name] = new Zone($this, $name, $sender, $this->positions1[spl_object_hash($sender)], $this->positions2[spl_object_hash($sender)]);
+                        $zone = new Zone($this, $name, $sender, $this->positions1[spl_object_hash($sender)], $this->positions2[spl_object_hash($sender)]);
+                        $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
+                        if($ev->isCancelled()){
+                            return false;
+                        }
+
+                        $this->zones[$name] = $zone;
                         $sender->sendMessage("[iZone] The zone have been created");
                         unset($this->positions1[spl_object_hash($sender)]);
                         unset($this->positions2[spl_object_hash($sender)]);
@@ -109,7 +120,29 @@ class iZone extends PluginBase implements CommandExecutor
                     $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
                     $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
 
-                    $this->zones[$name] = new Zone($this, $name, $sender, $pos1, $pos2);
+                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
+                    if($ev->isCancelled()){
+                        return false;
+                    }
+
+                    $this->zones[$name] = $zone;
+                    $sender->sendMessage("[iZone] You have successfully created a private zone");
+                    return true;
+                }
+                elseif(count($args) == 2)
+                {
+                    $radius = intval(array_shift($args));
+                    $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
+                    $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
+
+                    $zone =  new Zone($this, $name, $sender, $pos1, $pos2);
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
+                    if($ev->isCancelled()){
+                        return false;
+                    }
+
+                    $this->zones[$name] = $zone;
                     $sender->sendMessage("[iZone] You have successfully created a private zone");
                     return true;
                 }
@@ -121,7 +154,13 @@ class iZone extends PluginBase implements CommandExecutor
 
                     $pos2 =  new Position($x, $y, $z, $sender->getLevel());
 
-                    $this->zones[$name] = new Zone($this, $name, $sender, $sender, $pos2);
+                    $zone = new Zone($this, $name, $sender, $sender, $pos2);
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
+                    if($ev->isCancelled()){
+                        return false;
+                    }
+
+                    $this->zones[$name] = $zone;
                     $sender->sendMessage("[iZone] You have successfully created a private zone");
                     return true;
                 }
@@ -139,7 +178,13 @@ class iZone extends PluginBase implements CommandExecutor
                     $pos1 =  new Position($x, $y, $z, $sender->getLevel());
                     $pos2 =  new Position($x2, $y2, $z2, $sender->getLevel());
 
-                    $this->zones[$name] = new Zone($this, $name, $sender, $pos1, $pos2);
+                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
+                    if($ev->isCancelled()){
+                        return false;
+                    }
+
+                    $this->zones[$name] = $zone;
                     $sender->sendMessage("[iZone] You have successfully created a private zone");
 
                     return true;
@@ -156,6 +201,11 @@ class iZone extends PluginBase implements CommandExecutor
 
                 if($sender->isOp() || $sender->hasPermission($name . ADMIN))
                 {
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneRemovedEvent($this, $this->zones[$name], $sender));
+                    if($ev->isCancelled()){
+                        return false;
+                    }
+
                     $owner = $this->zones[$name]->getOwner();
                     unset($this->zones[$name]);
 
@@ -197,8 +247,15 @@ class iZone extends PluginBase implements CommandExecutor
 
                 if($sender->isOp() || $sender->hasPermission($name . MODERATOR))
                 {
+                    $perm = $name . "." . $perm;
+
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneSetPermissionEvent($this, $this->zones[$name], $user, $perm));
+                    if($ev->isCancelled()){
+                        return false;
+                    }
+
                     $this->removePermission($user, $name .  ADMIN);
-                    $this->addPermission($user, $name . "." . $perm);
+                    $this->addPermission($user, $perm);
 
                     if($time != null)
                         $this->getServer()->getScheduler()->scheduleDelayedTask(new PermissionMember($this, $this->getZone($name), $user, $name . SPECTATOR), 20 * $time);
@@ -243,7 +300,14 @@ class iZone extends PluginBase implements CommandExecutor
 
                 if($sender->isOp() || $sender->hasPermission($name . MODERATOR))
                 {
-                    $this->removePermission($user, $name . "." . $permission);
+                    $permission = $name . "." . $permission;
+
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneRemovePermissionEvent($this, $this->zones[$name], $user, $permission));
+                    if($ev->isCancelled()){
+                        return false;
+                    }
+
+                    $this->removePermission($user, $permission);
                     $sender->sendMessage("[iZone] The player has been removed!");
                     return true;
                 }

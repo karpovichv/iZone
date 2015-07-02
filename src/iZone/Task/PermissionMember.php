@@ -31,7 +31,8 @@ class PermissionMember extends PluginTask {
 
     public function onRun($currentTick)
     {
-        $this->plugin->addPermission($this->user, $this->permission);
-        $this->user->sendMessage("[iZone] Your permission have been changed in the zone: " . $this->zone->getName());
+        $this->plugin->removePermission($this->player, $this->zone->getName() . ADMIN);
+        $this->plugin->addPermission($this->player, $this->permission);
+        $this->player->sendMessage("[iZone] Your permission have been changed in the zone: " . $this->zone->getName());
     }
 }

@@ -2,20 +2,47 @@
 
 namespace iZone;
 
+use pocketmine\event\inventory\InventoryPickupItemEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\entity\EntityExplodeEvent;
 use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\event\player\PlayerJoinEvent;
+use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\Player;
 
 class EventManager implements Listener
 {
+    /** @var iZone */
     private $plugin;
 
-	public function __construct(MainClass $base)
+	public function __construct(iZone $base)
 	{
         $this->plugin = $base;
 	}
+
+
+    /**
+     * @param PlayerJoinEvent $event
+     *
+     * @priority LOWEST
+     */
+    public function onPlayerJoin(PlayerJoinEvent $event)
+    {
+        $this->plugin->addAttachment($event->getPlayer());
+    }
+
+
+    /**
+     * @param PlayerQuitEvent $event
+     *
+     * @priority MONITOR
+     */
+    public function onPlayerQuit(PlayerQuitEvent $event)
+    {
+        $this->plugin->removeAttachment($event->getPlayer());
+    }
 
 
     /**
@@ -24,24 +51,23 @@ class EventManager implements Listener
      * @priority        HIGH
      * @ignoreCancelled true
      */
-    public function OnBlockPlace(BlockPlaceEvent $event)
+    public function onBlockPlace(BlockPlaceEvent $event)
     {
-        $list = &$this->plugin->getAllZones();
         $player = $event->getPlayer();
+        if($player->isOp())
+            return;
 
-        foreach($list as $zone)
+        foreach($this->plugin->getAllZones() as $zone)
         {
-
             if($zone->isIn($event->getBlock()))
             {
-                if( $zone->getPermission($player) > SEE_PERM)
+                if($player->hasPermission($zone->getName() . WORKER))
                     break;
 
-                $event->setCancelled();
-                $event->getPlayer()->sendMessage("[iZone] This is a private area.");
+                $event->setCancelled(true);
+                $player->sendMessage("[iZone] This is a private area.");
                 break;
             }
-
         }
     }
 
@@ -51,24 +77,24 @@ class EventManager implements Listener
      * @priority        HIGH
      * @ignoreCancelled true
      */
-    public function OnBlockBreak(BlockBreakEvent $event)
+    public function onBlockBreak(BlockBreakEvent $event)
     {
-        $list = &$this->plugin->getAllZones();
+
         $player = $event->getPlayer();
+        if($player->isOp())
+            return;
 
-        foreach($list as $zone)
+        foreach($this->plugin->getAllZones() as $zone)
         {
-
             if($zone->isIn($event->getBlock()))
             {
-                if( $zone->getPermission($player) > SEE_PERM)
+                if($player->hasPermission($zone->getName() . WORKER))
                     break;
 
-                $event->setCancelled();
-                $event->getPlayer()->sendMessage("[iZone] This is a private area.");
+                $event->setCancelled(true);
+                $player->sendMessage("[iZone] This is a private area.");
                 break;
             }
-
         }
     }
 
@@ -79,23 +105,25 @@ class EventManager implements Listener
      * @priority        HIGH
      * @ignoreCancelled true
      */
-    public function OnEntityExplode(EntityExplodeEvent $event)
+    public function onEntityExplode(EntityExplodeEvent $event)
     {
-        if($this->plugin->getConfig()->get("protect-from-exploxion") != true)
-            return false;
+        if($this->plugin->getConfig()->get("protect-from-explosion", true) != true)
+            return;
 
-        $radius = $this->plugin->getConfig()->get("explosion-radius");
-
-        foreach($this->plugin->getAllZones() as $v)
+        $radius = $this->plugin->getConfig()->get("explosion-radius", 8);
+        foreach($this->plugin->getAllZones() as $zone)
         {
-            if($v->isOnRadius($event->getPosition(), $radius))
+            if($zone->isOnRadius($event->getPosition(), $radius))
             {
-               $v->getOwner()->sendMessage($this->plugin->getConfig()->get('[iZone] Someone is trying to blow up you private area.'));
-                $event->setCancelled();
+                $zone->getOwner()->sendMessage('[iZone] Something explode near zone: ' . $zone->getName());
+                $event->setCancelled(true);
                 break;
             }
         }
-        return true;
+        return;
+
+
+
     }
 
     /**
@@ -104,24 +132,46 @@ class EventManager implements Listener
      * @priority        HIGH
      * @ignoreCancelled true
      */
-    public function OnPlayerInteract(PlayerInteractEvent $event)
+    public function onPlayerInteract(PlayerInteractEvent $event)
     {
-        $list = $this->plugin->getAllZones();
         $player = $event->getPlayer();
+        if($player->isOp())
+            return;
 
-        foreach($list as $zone)
-        {
-            if($zone->isIn($event->getBlock()))
-            {
-                if($zone->getPermission($player) > WORK_PERM)
+        foreach ($this->plugin->getAllZones() as $zone) {
+            if ($zone->isIn($event->getBlock())) {
+                if ($player->hasPermission($zone->getName() . FRIEND))
                     break;
 
-                $event->setCancelled();
-                $event->getPlayer()->sendMessage("[iZone] This is a private area.");
+                $event->setCancelled(true);
+                $player->sendMessage("[iZone] This is a private area.");
                 break;
             }
-
         }
     }
+
+
+    /**
+     * @param InventoryPickupItemEvent $event
+     *
+     * @priority MONITOR
+     */
+    public function onPickupItem(InventoryPickupItemEvent $event)
+    {
+        $player = $event->getInventory()->getHolder();
+        if($player instanceof Player and !$player->isOp())
+        {
+            foreach ($this->plugin->getAllZones() as $zone) {
+                if ($zone->isIn($event->getItem())) {
+                    if ($player->hasPermission($zone->getName() . FRIEND))
+                        break;
+
+                    $event->setCancelled(true);
+                    $player->sendMessage("[iZone] This is a private area.");
+                    break;
+                }
+            }
+        }
+}
 
 }

@@ -1,8 +1,8 @@
 #name, main, version and api are required
 name: iZone
-main: iZone\MainClass
+main: iZone\iZone
 version: 2.0.0
-api: [1.1.0]
+api: [1.12.0]
 
 load: POSTWORLD
 author: InusualZ
@@ -11,7 +11,7 @@ website:
 commands:
  izone:
   description: iZone Command
-  usage: "Usage: /izone"
+  usage: "/izone"
   permission: izone.command.izone
 permissions:
  izone.command.izone:

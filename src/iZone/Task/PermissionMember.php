@@ -8,6 +8,7 @@
 
 namespace iZone\Task;
 
+use iZone\iZone;
 use iZone\Zone;
 
 use pocketmine\Player;
@@ -15,18 +16,22 @@ use pocketmine\scheduler\PluginTask;
 
 class PermissionMember extends PluginTask {
 
-    private $zone, $user, $permission;
+    private $plugin;
+    private $zone;
+    private $player;
+    private $permission;
 
-    public function __construct(Zone &$zone, Player $user, $permission)
+    public function __construct(iZone $plugin, Zone &$zone, Player $player, $permission)
     {
+        $this->plugin = $plugin;
         $this->zone = $zone;
-        $this->user = $user;
+        $this->player = $player;
         $this->permission = $permission;
     }
 
     public function onRun($currentTick)
     {
-        $this->zone->setPermission($this->user, $this->permission);
-        $this->user->sendMessage("[iZone] You permission have been changed in the private are of: " . $this->zone->owner->getDisplayName());
+        $this->plugin->addPermission($this->user, $this->permission);
+        $this->user->sendMessage("[iZone] Your permission have been changed in the zone: " . $this->zone->getName());
     }
 }

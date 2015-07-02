@@ -8,25 +8,33 @@
 
 namespace iZone\Task;
 
-use iZone\Zone;
+use iZone\iZone;
 
+use iZone\Zone;
 use pocketmine\scheduler\PluginTask;
 use pocketmine\Player;
 
 
 class DeleteMember extends PluginTask
 {
-    private $zone, $user;
+    /** @var iZone */
+    private $_plugin;
 
-    public function __construct(Zone &$zone, Player $user)
+    private $_zone;
+
+    /** @var Player  */
+    private $_player;
+
+    public function __construct(iZone $plugin, Zone $zone, Player $player)
     {
-        $this->zone = $zone;
-        $this->user = $user;
+        $this->_plugin = $plugin;
+        $this->_zone = $zone;
+        $this->_player = $player;
     }
 
     public function onRun($currentTick)
     {
-        $this->zone->deleteGuest($this->user);
-        $this->user->sendMessage("[iZone] You have been removed from the private area of: " . $this->zone->owner->getDisplayName());
+        $this->_plugin->removePermission($this->_player, $this->_zone->getName() . ".admin");
+        $this->_player->sendMessage("[iZone] You have been removed from the zone " . $this->_zone->getName());
     }
 }

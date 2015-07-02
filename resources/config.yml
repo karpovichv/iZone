@@ -4,7 +4,7 @@
 non-op-create: false
 
 #Protect from exploxion
-protect-from-exploxion: true
+protect-from-explosion: true
 
 #Explosion Radius Protection
 explosion-radius: 8
@@ -12,3 +12,5 @@ explosion-radius: 8
 #Default Area Size
 default-size: 10
 
+#Data Provider[ yml, mysql, sql ]
+data-provider: yml

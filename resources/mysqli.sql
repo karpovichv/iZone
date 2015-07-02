@@ -12,5 +12,6 @@ CREATE TABLE IF NOT EXISTS izone_zones (
 
 CREATE TABLE IF NOT EXISTS izone_player_permissions (
   player_name VARCHAR(50) PRIMARY KEY,
-  permission_name VARCHAR(150)
+  zone_name VARCHAR(50),
+  permission_name VARCHAR(100)
 );

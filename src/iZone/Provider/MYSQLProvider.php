@@ -71,7 +71,11 @@ class MYSQLProvider implements DataProvider
     public function removeZone(Zone $zone)
     {
         $name = $this->database->escape_string($zone->getName());
-        return $this->database->query("DELETE FROM izone_zones WHERE name = {$name}");
+        if(!$this->database->query("DELETE FROM izone_zones WHERE name = {$name}"))
+            return false;
+
+        $zoneName = $this->database->escape_string($zone->getName());
+        return $this->database->query("DELETE FROM izone_player_permissions WHERE zone_name = {$zoneName}");
 
     }
 
@@ -100,25 +104,26 @@ class MYSQLProvider implements DataProvider
 
     public function setPermission(Player $player, $permission)
     {
+        $zoneName = explode(".", $permission)[0];
         $player = $this->database->escape_string($player->getName());
         $permission = $this->database->escape_string($permission);
-        return $this->database->query("INSERT INTO izone_player_permissions (player_name, permission_name) VALUES ({$player}, {$permission})");
+        return $this->database->query("INSERT INTO izone_player_permissions (player_name, zone_name permission_name) VALUES ({$player}, {$zoneName}, {$permission})");
     }
 
-    public function unsetPermission(Player $player, $permission)
+    public function unsetPermission(Player $player, Zone $zone)
     {
         $player = $this->database->escape_string($player->getName());
-        $permission = $this->database->escape_string($permission);
-        return $this->database->query("DELETE FROM izone_player_permissions WHERE player_name = {$player} AND permission_name = {$permission}");
+        $zoneName = $this->database->escape_string($zone->getName());
+        return $this->database->query("DELETE FROM izone_player_permissions WHERE player_name = {$player} AND zone_name = {$zoneName}");
     }
 
     public function getPermissions(Player $player)
     {
         $playerName = $this->database->escape_string($player->getName());
-        $result = $this->database->query("SELECT * FROM izone_player_permissions WHERE player_name = {$playerName}");
+        $result = $this->database->query("SELECT permission_name FROM izone_player_permissions WHERE player_name = {$playerName}");
         if($result instanceof \mysqli_result)
         {
-            $data = $result->fetch_assoc();
+            $data = $result->fetch_all(MYSQLI_NUM);
             $result->close();
             return $data;
         }

@@ -43,7 +43,7 @@ class YAMLProvider implements DataProvider
 
     public function addZone(Zone $zone)
     {
-        $this->zonesConfig->set(spl_object_hash($zone),
+        $this->zonesConfig->set($zone->getName(),
             [
                 $zone->getName(),
                 $zone->getOwner(),
@@ -55,23 +55,38 @@ class YAMLProvider implements DataProvider
 
     public function removeZone(Zone $zone)
     {
-        $this->zonesConfig->remove(spl_object_hash($zone));
+        $this->zonesConfig->remove($zone->getName());
+        $permData = $this->permConfig->getAll(false);
+        foreach($permData as $key => $value)
+        {
+            var_dump($value);
+            if(array_key_exists($zone->getName(), $value))
+            {
+                unset($value[$zone->getName()]);
+                return true;
+            }
+        }
+        return false;
     }
 
     public function setPermission(Player $player, $permission)
     {
+        $zone =  explode(".", $permission)[0];
         $data = $this->permConfig->get($player->getName() . ".permissions", []);
-        $data[] = $permission;
+        $data[$zone] = $permission;
         $this->permConfig->set($player->getName() .  ".permissions", $data);
+        return true;
     }
 
-    public function unsetPermission(Player $player, $permission)
+    public function unsetPermission(Player $player, Zone $zone)
     {
+        $zoneName = $zone->getName();
         $data = $this->permConfig->get($player->getName() . ".permissions", []);
-        if(count($data) == 0 || array_search($permission, $data) === false)
-            return;
+        if(count($data) == 0 || !array_key_exists($zoneName, $data))
+            return false;
 
-        unset($data[array_search($permission, $data)]);
+        unset($data[$zoneName]);
+        return true;
 
     }
 
@@ -88,16 +103,16 @@ class YAMLProvider implements DataProvider
 
     public function getAllZone()
     {
-        $data = $this->zonesConfig->getAll(true);
+        $data = $this->zonesConfig->getAll(false);
         $zones = [];
-        foreach($data as $key => $value)
+        foreach($data as $id => $value)
         {
-            $level = $this->_plugin->getServer()->getLevelByName($value[3]);
+            $level = $this->_plugin->getServer()->getLevelByName($value[2]);
             if($level == null)
                 continue;
 
-            $pos1 = new Position($value[4][0], $value[4][1], $value[4][2], $level);
-            $pos2 = new Position($value[4][3], $value[4][4], $value[4][5], $level);
+            $pos1 = new Position($value[3][0], $value[3][1], $value[3][2], $level);
+            $pos2 = new Position($value[3][3], $value[3][4], $value[3][5], $level);
             $zones[$value[0]] = new Zone($this->_plugin, $value[0], $value[1], $pos1, $pos2);
         }
         return $zones;

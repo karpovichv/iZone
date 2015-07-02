@@ -12,6 +12,7 @@ CREATE TABLE Zones (
 
 CREATE TABLE Permissions (
   player_name TEXT PRIMARY KEY,
+  zone_name TEXT,
   permission_name TEXT
 
 );

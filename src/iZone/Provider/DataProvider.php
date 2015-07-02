@@ -50,10 +50,10 @@ interface DataProvider
 
     /**
      * @param Player $player
-     * @param $permission
+     * @param Zone $zone
      * @return bool
      */
-    public function unsetPermission(Player $player, $permission);
+    public function unsetPermission(Player $player, Zone $zone);
 
     /**
      * @return

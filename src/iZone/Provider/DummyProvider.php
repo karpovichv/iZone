@@ -53,7 +53,7 @@ class DummyProvider implements DataProvider {
         return [];
     }
 
-    public function unsetPermission(Player $player, $permission)
+    public function unsetPermission(Player $player, Zone $zone)
     {
         return false;
     }

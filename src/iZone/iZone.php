@@ -21,12 +21,6 @@ use pocketMine\plugin\PluginBase;
 use pocketmine\Player;
 use pocketmine\permission\PermissionAttachment;
 
-/**
- * TODO
- * * Implement a Data Provider Interface
- * * Implement the saving and loading of zones
- */
-
 
 /**
  * Class iZone
@@ -150,22 +144,23 @@ class iZone extends PluginBase implements CommandExecutor
                     {
                         $pos1 = $this->positions1[spl_object_hash($sender)];
                         $pos2 = $this->positions2[spl_object_hash($sender)];
-                        foreach($this->zones as $zone)
+                        $zone = new Zone($this, $name, $sender, $pos1, $pos2);
+                        foreach($this->zones as $z)
                         {
-                            if($zone->isIn($pos1) || $zone->isIn($pos2))
+                            if($z->intersectsWith($zone))
                             {
                                 $sender->sendMessage("[iZone] You can not interfere with other zones");
                                 return true;
                             }
                         }
 
-                        $zone = new Zone($this, $name, $sender, $pos1, $pos2);
                         $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
                         if($ev->isCancelled()){
                             return false;
                         }
 
                         $this->zones[$name] = $zone;
+                        $this->dataProvider->addZone($zone);
                         $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                         unset($this->positions1[spl_object_hash($sender)]);
                         unset($this->positions2[spl_object_hash($sender)]);
@@ -175,24 +170,24 @@ class iZone extends PluginBase implements CommandExecutor
                     $radius = $this->getConfig()->get("default-size");
                     $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
                     $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
+                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
 
-
-                    foreach($this->zones as $zone)
+                    foreach($this->zones as $z)
                     {
-                        if($zone->isIn($pos1) || $zone->isIn($pos2))
+                        if($z->intersectsWith($zone))
                         {
                             $sender->sendMessage("[iZone] You can not interfere with other zones");
                             return true;
                         }
                     }
 
-                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
                     if($ev->isCancelled()){
                         return false;
                     }
 
                     $this->zones[$name] = $zone;
+                    $this->dataProvider->addZone($zone);
                     $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                     return true;
                 }
@@ -201,23 +196,23 @@ class iZone extends PluginBase implements CommandExecutor
                     $radius = intval(array_shift($args));
                     $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
                     $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
-
-                    foreach($this->zones as $zone)
+                    $zone =  new Zone($this, $name, $sender, $pos1, $pos2);
+                    foreach($this->zones as $z)
                     {
-                        if($zone->isIn($pos1) || $zone->isIn($pos2))
+                        if($z->intersectsWith($zone))
                         {
                             $sender->sendMessage("[iZone] You can not interfere with other zones");
                             return true;
                         }
                     }
 
-                    $zone =  new Zone($this, $name, $sender, $pos1, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
                     if($ev->isCancelled()){
                         return false;
                     }
 
                     $this->zones[$name] = $zone;
+                    $this->dataProvider->addZone($zone);
                     $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                     return true;
                 }
@@ -229,23 +224,23 @@ class iZone extends PluginBase implements CommandExecutor
 
                     $pos2 =  new Position($x, $y, $z, $sender->getLevel());
 
-
-                    foreach($this->zones as $zone)
+                    $zone = new Zone($this, $name, $sender, $sender, $pos2);
+                    foreach($this->zones as $z)
                     {
-                        if($zone->isIn($sender) || $zone->isIn($pos2))
+                        if($z->intersectsWith($zone))
                         {
                             $sender->sendMessage("[iZone] You can not interfere with other zones");
                             return true;
                         }
                     }
 
-                    $zone = new Zone($this, $name, $sender, $sender, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
                     if($ev->isCancelled()){
                         return false;
                     }
 
                     $this->zones[$name] = $zone;
+                    $this->dataProvider->addZone($zone);
                     $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
                     return true;
                 }
@@ -263,22 +258,23 @@ class iZone extends PluginBase implements CommandExecutor
                     $pos1 =  new Position($x, $y, $z, $sender->getLevel());
                     $pos2 =  new Position($x2, $y2, $z2, $sender->getLevel());
 
-                    foreach($this->zones as $zone)
+                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
+                    foreach($this->zones as $z)
                     {
-                        if($zone->isIn($pos1) || $zone->isIn($pos2))
+                        if($z->intersectsWith($zone))
                         {
                             $sender->sendMessage("[iZone] You can not interfere with other zones");
                             return true;
                         }
                     }
 
-                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
                     if($ev->isCancelled()){
                         return false;
                     }
 
                     $this->zones[$name] = $zone;
+                    $this->dataProvider->addZone($zone);
                     $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
 
                     return true;
@@ -300,6 +296,7 @@ class iZone extends PluginBase implements CommandExecutor
                         return false;
                     }
 
+                    $this->dataProvider->removeZone($this->zones[$name]);
                     $owner = $this->zones[$name]->getOwner();
                     unset($this->zones[$name]);
 
@@ -358,6 +355,8 @@ class iZone extends PluginBase implements CommandExecutor
 
                     $this->removePermission($user, $name .  ADMIN);
                     $this->addPermission($user, $perm);
+                    $this->dataProvider->setPermission($user, $perm);
+
 
                     if($time != null)
                         $this->getServer()->getScheduler()->scheduleDelayedTask(new PermissionMember($this, $this->getZone($name), $user, $name . SPECTATOR), 20 * $time);
@@ -411,6 +410,7 @@ class iZone extends PluginBase implements CommandExecutor
                     }
 
                     $this->removePermission($user, $permission);
+                    $this->dataProvider->unsetPermission($user, $permission);
                     $sender->sendMessage("[iZone] The player has been removed!");
                     return true;
                 }
@@ -446,7 +446,7 @@ class iZone extends PluginBase implements CommandExecutor
         $player = ($player instanceof Player ? $player : $this->getServer()->getPlayer($player));
         if($player == null || empty($player))
         {
-            $this->getLogger()->error("Unable to find player while trying to add permission.");
+            $this->getLogger()->error("Unable to find player {$player} while trying to add permission");
             return false;
         }
 
@@ -458,32 +458,26 @@ class iZone extends PluginBase implements CommandExecutor
             return false;
         }
 
-
         switch($permission[1])
         {
             case "owner":
             case "admin":
             case "5":
                 $attachment->setPermission($permission[0] . ADMIN, true);
-                $this->dataProvider->setPermission($player, $permission[0] . ADMIN);
             case "moderator":
             case "mod":
             case "4":
                 $attachment->setPermission($permission[0] . MODERATOR, true);
-                $this->dataProvider->setPermission($player, $permission[0] . MODERATOR);
             case "friend":
             case "frnd":
             case "3":
                 $attachment->setPermission($permission[0] . FRIEND, true);
-                $this->dataProvider->setPermission($player, $permission[0] . FRIEND);
             case "worker":
             case "work":
             case "2":
                 $attachment->setPermission($permission[0] . WORKER, true);
-                $this->dataProvider->setPermission($player, $permission[0] . WORKER);
             default:
                 $attachment->setPermission($permission[0] . SPECTATOR, true);
-                $this->dataProvider->setPermission($player, $permission[0] . SPECTATOR);
                 break;
         }
         return true;
@@ -513,25 +507,20 @@ class iZone extends PluginBase implements CommandExecutor
             case "admin":
             case "5":
                 $attachment->unsetPermission($permission[0] . ADMIN);
-                $this->dataProvider->unsetPermission($player, $permission[0] . ADMIN);
             case "moderator":
             case "mod":
             case "4":
                 $attachment->unsetPermission($permission[0] . MODERATOR);
-                $this->dataProvider->unsetPermission($player, $permission[0] . MODERATOR);
             case "friend":
             case "frnd":
             case "3":
                 $attachment->unsetPermission($permission[0] . FRIEND);
-                $this->dataProvider->unsetPermission($player, $permission[0] . FRIEND);
             case "worker":
             case "work":
             case "2":
                 $attachment->unsetPermission($permission[0] . WORKER);
-                $this->dataProvider->unsetPermission($player, $permission[0] . WORKER);
             default:
                 $attachment->unsetPermission($permission[0] . SPECTATOR);
-                $this->dataProvider->unsetPermission($player, $permission[0] . SPECTATOR);
                 break;
         }
 
@@ -548,6 +537,14 @@ class iZone extends PluginBase implements CommandExecutor
         }
 
         $this->playersAttachment[spl_object_hash($player)] = $player->addAttachment($this);
+
+        //Load saved permissions
+        $permissions = $this->dataProvider->getPermissions($player);
+        if(count($permissions) == 0)
+            return true;
+
+        foreach($permissions as $permission)
+            $this->addPermission($player, $permission);
         return true;
     }
 
@@ -571,6 +568,32 @@ class iZone extends PluginBase implements CommandExecutor
         return true;
     }
 
+
+    public function getRank($rank)
+    {
+        switch($rank)
+        {
+            case "owner":
+            case "admin":
+            case "5":
+                return ADMIN;
+            case "moderator":
+            case "mod":
+            case "4":
+                return MODERATOR;
+            case "friend":
+            case "frnd":
+            case "3":
+                return FRIEND;
+            case "worker":
+            case "work":
+            case "2":
+                return WORKER;
+            default:
+                return SPECTATOR;
+                break;
+        }
+    }
 
     /**
      * @param DataProvider $provider

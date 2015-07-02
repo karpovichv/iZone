@@ -19,6 +19,7 @@ define("FRIEND", ".friend");
 define("WORKER", ".worker");
 define("SPECTATOR", ".spectator");
 
+use pocketmine\math\AxisAlignedBB;
 use pocketmine\Player;
 use pocketmine\level\Position;
 
@@ -26,7 +27,7 @@ use pocketmine\level\Position;
  * Class Zone
  * @package iZone
  */
-class Zone
+class Zone extends AxisAlignedBB
 {
     /** @var iZone */
     private $plugin;
@@ -39,9 +40,6 @@ class Zone
 
     /** @var string */
     private $name;
-
-
-    private $minX, $minY, $minZ, $maxX, $maxY, $maxZ;
 
     /**
      * @param iZone $plugin
@@ -68,8 +66,14 @@ class Zone
 
 
         //Register owner's permissions
-        $this->plugin->addPermission($owner, $name . ".admin");
+        if($owner instanceof Player)
+        {
+            $this->plugin->addPermission($owner, $name . ADMIN);
+            $this->plugin->getDataProvider()->setPermission($owner, $name . ADMIN);
+        }
+
     }
+
 
     /**
      * @param Position $position

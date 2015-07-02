@@ -66,6 +66,12 @@ class SQLProvider implements DataProvider
         $prepare = $this->database->prepare("DELETE FROM Zones WHERE name = :name");
         $prepare->bindValue(":name", \SQLite3::escapeString($zone->getName()), SQLITE3_TEXT);
         $prepare->execute();
+
+        $prepare = $this->database->prepare("DELETE FROM Permissions WHERE zone_name = :zone");
+        $prepare->bindValue(":zone", \SQLite3::escapeString($zone->getName()), SQLITE3_TEXT);
+        $prepare->execute();
+
+        return true;
     }
 
     public function getAllZone()
@@ -94,26 +100,28 @@ class SQLProvider implements DataProvider
 
     public function setPermission(Player $player, $permission)
     {
-        $prepare = $this->database->prepare("INSERT INTO Permissions (player_name, permission_name) VALUES (:name, :permission)");
+        $zone = explode(".", $permission)[0];
+        $prepare = $this->database->prepare("INSERT INTO Permissions (player_name, zone_name,  permission_name) VALUES (:name, :zone, :permission)");
         $prepare->bindValue(":name", \SQLite3::escapeString($player->getName()), SQLITE3_TEXT);
+        $prepare->bindValue(":zone", \SQLite3::escapeString($zone), SQLITE3_TEXT);
         $prepare->bindValue(":permission", \SQLite3::escapeString($permission), SQLITE3_TEXT);
         $prepare->execute();
     }
 
-    public function unsetPermission(Player $player, $permission)
+    public function unsetPermission(Player $player, Zone $zone)
     {
-        $prepare = $this->database->prepare("DELETE FROM Permissions WHERE player_name = :name AND permission_name = :permission");
+        $prepare = $this->database->prepare("DELETE FROM Permissions WHERE player_name = :name AND zone_name = :zone");
         $prepare->bindValue(":name", \SQLite3::escapeString($player->getName()), SQLITE3_TEXT);
-        $prepare->bindValue(":permission", \SQLite3::escapeString($permission), SQLITE3_TEXT);
+        $prepare->bindValue(":zone", \SQLite3::escapeString($zone->getName()), SQLITE3_TEXT);
         $prepare->execute();
     }
 
     public function getPermissions(Player $player)
     {
-        $prepare = $this->database->prepare("SELECT * FROM Permissions WHERE player_name =  :name");
+        $prepare = $this->database->prepare("SELECT permission_name FROM Permissions WHERE player_name = :name");
         $prepare->bindValue(":name", \SQLite3::escapeString($player->getName()), SQLITE3_TEXT);
         $result = $prepare->execute();
-        return (($result instanceof \SQLite3Result) ? $result->fetchArray(SQLITE3_ASSOC) : []);
+        return (($result instanceof \SQLite3Result) ? $result->fetchArray(SQLITE3_NUM) : []);
     }
 
     public function close()

@@ -31,7 +31,7 @@ class Zone
     /** @var iZone */
     private $plugin;
 
-    /** @var Player */
+    /** @var string */
     private $owner;
 
     /** @var string */
@@ -50,7 +50,7 @@ class Zone
      * @param Position $pos1
      * @param Position $pos2
      */
-    public function __construct(iZone $plugin, $name, Player $owner, Position $pos1, Position $pos2)
+    public function __construct(iZone $plugin, $name, $owner, Position $pos1, Position $pos2)
     {
         $this->plugin = $plugin;
         $this->name = $name;
@@ -63,7 +63,7 @@ class Zone
         $this->maxY = max($pos1->y, $pos2->y);
         $this->maxZ = max($pos1->z, $pos2->z);
 
-        $this->owner = $owner;
+        $this->owner = (($owner instanceof Player) ? $owner->getName() : $owner);
         $this->levelName = $pos1->getLevel()->getName();
 
 
@@ -115,7 +115,7 @@ class Zone
     }
 
     /**
-     * @return Player
+     * @return string
      */
     public function getOwner()
     {
@@ -128,6 +128,19 @@ class Zone
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLevelName()
+    {
+        return $this->levelName;
+    }
+
+    public function getPosition()
+    {
+        return [ $this->minX, $this->minY, $this->minZ, $this->maxX, $this->maxY, $this->maxZ ];
     }
 
 } 

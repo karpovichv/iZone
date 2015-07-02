@@ -11,35 +11,54 @@
  *
  */
 
+
 namespace iZone\Provider;
 
+
+use iZone\iZone;
 use iZone\Zone;
 use pocketmine\Player;
 
-class YMLProvider implements DataProvider
-{
+class DummyProvider implements DataProvider {
+
+    private $_plugin;
+
+    public function __construct(iZone $plugin)
+    {
+        $this->_plugin = $plugin;
+    }
+
     public function addZone(Zone $zone)
     {
-        // TODO: Implement addZone() method.
+        return false;
+    }
+
+    public function getAllZone()
+    {
+        return [];
     }
 
     public function removeZone(Zone $zone)
     {
-        // TODO: Implement removeZone() method.
+        return false;
     }
 
     public function setPermission(Player $player, $permission)
     {
-        // TODO: Implement setPermission() method.
+        return false;
+    }
+
+    public function getPermissions(Player $player)
+    {
+        return [];
     }
 
     public function unsetPermission(Player $player, $permission)
     {
-        // TODO: Implement unsetPermission() method.
+        return false;
     }
 
     public function close()
     {
-        // TODO: Implement close() method.
     }
 }

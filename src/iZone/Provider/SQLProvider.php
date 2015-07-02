@@ -14,34 +14,110 @@
 namespace iZone\Provider;
 
 
+use iZone\iZone;
 use iZone\Zone;
+use pocketmine\level\Position;
 use pocketmine\Player;
 
 class SQLProvider implements DataProvider
 {
 
+    private $database;
+
+    private $plugin;
+
+    public function __construct(iZone $plugin)
+    {
+        $this->plugin = $plugin;
+
+        if(!file_exists($plugin->getDataFolder() . "Database.db"))
+        {
+            $this->database = new \SQLite3($plugin->getDataFolder() . "Database.db", SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
+            $resource = $this->plugin->getResource("sqlite3.sql");
+            $this->database->exec(stream_get_contents($resource));
+            fclose($resource);
+        }
+        else
+        {
+            $this->database = new \SQLite3($plugin->getDataFolder() . "Database.db", SQLITE3_OPEN_READWRITE);
+        }
+    }
+
     public function addZone(Zone $zone)
     {
-        // TODO: Implement addZone() method.
+        $position = $zone->getPosition();
+
+        $prepare = $this->database->prepare("INSERT INTO Zones (name, player_owner, level_name, minX, minY, minZ, maxX, maxY, maxZ) VALUES (:name, :player, :level, :minx, :miny, :minz, :maxx, :maxy, :maxz)");
+        $prepare->bindValue(":name", \SQLite3::escapeString($zone->getName()), SQLITE3_TEXT);
+        $prepare->bindValue(":player", \SQLite3::escapeString($zone->getOwner()), SQLITE3_TEXT);
+        $prepare->bindValue(":level", $zone->getLevelName(), SQLITE3_TEXT);
+        $prepare->bindValue(":minx", $position[0], SQLITE3_INTEGER);
+        $prepare->bindValue(":miny", $position[1], SQLITE3_INTEGER);
+        $prepare->bindValue(":minz", $position[2], SQLITE3_INTEGER);
+        $prepare->bindValue(":maxx", $position[3], SQLITE3_INTEGER);
+        $prepare->bindValue(":maxy", $position[4], SQLITE3_INTEGER);
+        $prepare->bindValue(":maxz", $position[5], SQLITE3_INTEGER);
+        $prepare->execute();
+
     }
 
     public function removeZone(Zone $zone)
     {
-        // TODO: Implement removeZone() method.
+        $prepare = $this->database->prepare("DELETE FROM Zones WHERE name = :name");
+        $prepare->bindValue(":name", \SQLite3::escapeString($zone->getName()), SQLITE3_TEXT);
+        $prepare->execute();
+    }
+
+    public function getAllZone()
+    {
+        $result = $this->database->exec("SELECT * FROM Zones");
+        if($result instanceof \SQLite3Result)
+        {
+            $zones = [];
+            $data = $result->fetchArray(SQLITE3_ASSOC);
+            $result->finalize();
+            foreach($data as $zone)
+            {
+                $level = $this->plugin->getServer()->getLevelByName($zone["level_name"]);
+                if($level == null)
+                    continue;
+
+                $pos1 = new Position($zone["minX"], $zone["minY"], $zone["minZ"], $level);
+                $pos2 = new Position($zone["maxX"], $zone["maxY"], $zone["maxZ"], $level);
+                $zones[$zone["name"]] = new Zone($this->plugin, $zone["name"], $zone["player_owner"], $pos1, $pos2);
+            }
+            return $zones;
+        }
+        return [];
+
     }
 
     public function setPermission(Player $player, $permission)
     {
-        // TODO: Implement setPermission() method.
+        $prepare = $this->database->prepare("INSERT INTO Permissions (player_name, permission_name) VALUES (:name, :permission)");
+        $prepare->bindValue(":name", \SQLite3::escapeString($player->getName()), SQLITE3_TEXT);
+        $prepare->bindValue(":permission", \SQLite3::escapeString($permission), SQLITE3_TEXT);
+        $prepare->execute();
     }
 
     public function unsetPermission(Player $player, $permission)
     {
-        // TODO: Implement unsetPermission() method.
+        $prepare = $this->database->prepare("DELETE FROM Permissions WHERE player_name = :name AND permission_name = :permission");
+        $prepare->bindValue(":name", \SQLite3::escapeString($player->getName()), SQLITE3_TEXT);
+        $prepare->bindValue(":permission", \SQLite3::escapeString($permission), SQLITE3_TEXT);
+        $prepare->execute();
+    }
+
+    public function getPermissions(Player $player)
+    {
+        $prepare = $this->database->prepare("SELECT * FROM Permissions WHERE player_name =  :name");
+        $prepare->bindValue(":name", \SQLite3::escapeString($player->getName()), SQLITE3_TEXT);
+        $result = $prepare->execute();
+        return (($result instanceof \SQLite3Result) ? $result->fetchArray(SQLITE3_ASSOC) : []);
     }
 
     public function close()
     {
-        // TODO: Implement close() method.
+        $this->database->close();
     }
 }

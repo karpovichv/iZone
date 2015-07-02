@@ -16,14 +16,13 @@ use pocketmine\scheduler\PluginTask;
 
 class PermissionMember extends PluginTask {
 
-    private $plugin;
     private $zone;
     private $player;
     private $permission;
 
     public function __construct(iZone $plugin, Zone &$zone, Player $player, $permission)
     {
-        $this->plugin = $plugin;
+        parent::__construct($plugin);
         $this->zone = $zone;
         $this->player = $player;
         $this->permission = $permission;
@@ -31,8 +30,8 @@ class PermissionMember extends PluginTask {
 
     public function onRun($currentTick)
     {
-        $this->plugin->removePermission($this->player, $this->zone->getName() . ADMIN);
-        $this->plugin->addPermission($this->player, $this->permission);
+        $this->getOwner()->removePermission($this->player, $this->zone->getName() . ADMIN);
+        $this->getOwner()->addPermission($this->player, $this->permission);
         $this->player->sendMessage("[iZone] Your permission have been changed in the zone: " . $this->zone->getName());
     }
 }

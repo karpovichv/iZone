@@ -7,6 +7,11 @@ use iZone\Event\ZoneRemovedEvent;
 use iZone\Event\ZoneRemovePermissionEvent;
 use iZone\Event\ZoneSetPermission;
 use iZone\Event\ZoneSetPermissionEvent;
+use iZone\Provider\DataProvider;
+use iZone\Provider\DummyProvider;
+use iZone\Provider\MYSQLProvider;
+use iZone\Provider\SQLProvider;
+use iZone\Provider\YAMLProvider;
 use iZone\Task\PermissionMember;
 use pocketMine\command\Command;
 use pocketmine\command\CommandExecutor;
@@ -46,20 +51,56 @@ class iZone extends PluginBase implements CommandExecutor
     private $playersAttachment;
 
 
+    /** @var DataProvider */
+    private $dataProvider;
+
     public function __construct()
     {
         $this->zones = [];
         $this->positions1 = [];
         $this->positions2 = [];
         $this->playersAttachment = [];
+
     }
 
     public function onEnable()
     {
         $this->saveDefaultConfig();
         $this->reloadConfig();
+
 		$this->getServer()->getPluginManager()->registerEvents(new EventManager($this), $this);
+
+        $provider = $this->getConfig()->get("data-provider", "yml");
+        switch(strtolower($provider))
+        {
+            case "mysql":
+                $this->dataProvider = new MYSQLProvider($this);
+                break;
+            case "sql:":
+                $this->dataProvider = new SQLProvider($this);
+                break;
+            case "yml":
+                $this->dataProvider = new YAMLProvider($this);
+                break;
+
+            case "none":
+            default:
+                $this->dataProvider = new DummyProvider($this);
+                break;
+        }
+
+        $this->zones = $this->dataProvider->getAllZone();
 	}
+
+
+    public function onDisable()
+    {
+        $this->dataProvider->close();
+        $this->zones = [];
+        $this->positions1 =  [];
+        $this->positions2 = [];
+        $this->playersAttachment =  [];
+    }
 
     /**
      * @param CommandSender $sender
@@ -78,11 +119,13 @@ class iZone extends PluginBase implements CommandExecutor
         {
             case "pos1":
                 $this->positions1[spl_object_hash($sender)] = Position::fromObject($sender, $sender->getLevel());
+                $sender->sendMessage("[iZone] Registered Position #1");
                 return true;
             break;
 
             case "pos2":
                 $this->positions2[spl_object_hash($sender)] = Position::fromObject($sender, $sender->getLevel());
+                $sender->sendMessage("[iZone] Registered Position #2");
                 return true;
             break;
 
@@ -105,7 +148,18 @@ class iZone extends PluginBase implements CommandExecutor
                 {
                     if(isset($this->positions1[spl_object_hash($sender)]) && isset($this->positions2[spl_object_hash($sender)]))
                     {
-                        $zone = new Zone($this, $name, $sender, $this->positions1[spl_object_hash($sender)], $this->positions2[spl_object_hash($sender)]);
+                        $pos1 = $this->positions1[spl_object_hash($sender)];
+                        $pos2 = $this->positions2[spl_object_hash($sender)];
+                        foreach($this->zones as $zone)
+                        {
+                            if($zone->isIn($pos1) || $zone->isIn($pos2))
+                            {
+                                $sender->sendMessage("[iZone] You can not interfere with other zones");
+                                return true;
+                            }
+                        }
+
+                        $zone = new Zone($this, $name, $sender, $pos1, $pos2);
                         $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
                         if($ev->isCancelled()){
                             return false;
@@ -122,6 +176,16 @@ class iZone extends PluginBase implements CommandExecutor
                     $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
                     $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
 
+
+                    foreach($this->zones as $zone)
+                    {
+                        if($zone->isIn($pos1) || $zone->isIn($pos2))
+                        {
+                            $sender->sendMessage("[iZone] You can not interfere with other zones");
+                            return true;
+                        }
+                    }
+
                     $zone = new Zone($this, $name, $sender, $pos1, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
                     if($ev->isCancelled()){
@@ -137,6 +201,15 @@ class iZone extends PluginBase implements CommandExecutor
                     $radius = intval(array_shift($args));
                     $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
                     $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
+
+                    foreach($this->zones as $zone)
+                    {
+                        if($zone->isIn($pos1) || $zone->isIn($pos2))
+                        {
+                            $sender->sendMessage("[iZone] You can not interfere with other zones");
+                            return true;
+                        }
+                    }
 
                     $zone =  new Zone($this, $name, $sender, $pos1, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
@@ -155,6 +228,16 @@ class iZone extends PluginBase implements CommandExecutor
                     $z = intval(array_shift($args));
 
                     $pos2 =  new Position($x, $y, $z, $sender->getLevel());
+
+
+                    foreach($this->zones as $zone)
+                    {
+                        if($zone->isIn($sender) || $zone->isIn($pos2))
+                        {
+                            $sender->sendMessage("[iZone] You can not interfere with other zones");
+                            return true;
+                        }
+                    }
 
                     $zone = new Zone($this, $name, $sender, $sender, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
@@ -179,6 +262,15 @@ class iZone extends PluginBase implements CommandExecutor
 
                     $pos1 =  new Position($x, $y, $z, $sender->getLevel());
                     $pos2 =  new Position($x2, $y2, $z2, $sender->getLevel());
+
+                    foreach($this->zones as $zone)
+                    {
+                        if($zone->isIn($pos1) || $zone->isIn($pos2))
+                        {
+                            $sender->sendMessage("[iZone] You can not interfere with other zones");
+                            return true;
+                        }
+                    }
 
                     $zone = new Zone($this, $name, $sender, $pos1, $pos2);
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
@@ -210,6 +302,13 @@ class iZone extends PluginBase implements CommandExecutor
 
                     $owner = $this->zones[$name]->getOwner();
                     unset($this->zones[$name]);
+
+                    $owner = $this->getServer()->getPlayer($owner);
+                    if($owner == null)
+                    {
+                        $sender->sendMessage("[iZone] The zone {$name} have been removed");
+                        return true;
+                    }
 
                     $owner->sendMessage("[iZone] The zone {$name} have been removed.");
                     if($owner->getName() !== $sender->getName())
@@ -327,12 +426,12 @@ class iZone extends PluginBase implements CommandExecutor
             break;
 
             case "help":
-                $sender->sendMessage("Usage: /izone <command> [parameters...] \{optional...\}");
-                $sender->sendMessage("Usage: /izone create [name] \{int\}");
+                $sender->sendMessage("Usage: /izone <command> [parameters...] {optional...}");
+                $sender->sendMessage("Usage: /izone create [name] {int}");
                 $sender->sendMessage("Usage: /izone create [name] [x] [y] [z] ");
                 $sender->sendMessage("Usage: /izone create [name] [x1] [y1] [z1] [x2] [y2] [z2] ");
                 $sender->sendMessage("Usage: /izone destroy [name]");
-                $sender->sendMessage("Usage: /izone set [zone] [player] [rank] \{time\}");
+                $sender->sendMessage("Usage: /izone set [zone] [player] [rank] {time}");
                 $sender->sendMessage("Usage: /izone unset [zone] [player] [rank]");
                 $sender->sendMessage("Usage: /izone coord");
                 return true;
@@ -362,20 +461,31 @@ class iZone extends PluginBase implements CommandExecutor
 
         switch($permission[1])
         {
+            case "owner":
             case "admin":
+            case "5":
                 $attachment->setPermission($permission[0] . ADMIN, true);
+                $this->dataProvider->setPermission($player, $permission[0] . ADMIN);
             case "moderator":
+            case "mod":
+            case "4":
                 $attachment->setPermission($permission[0] . MODERATOR, true);
+                $this->dataProvider->setPermission($player, $permission[0] . MODERATOR);
             case "friend":
+            case "frnd":
+            case "3":
                 $attachment->setPermission($permission[0] . FRIEND, true);
+                $this->dataProvider->setPermission($player, $permission[0] . FRIEND);
             case "worker":
+            case "work":
+            case "2":
                 $attachment->setPermission($permission[0] . WORKER, true);
+                $this->dataProvider->setPermission($player, $permission[0] . WORKER);
             default:
                 $attachment->setPermission($permission[0] . SPECTATOR, true);
+                $this->dataProvider->setPermission($player, $permission[0] . SPECTATOR);
                 break;
         }
-
-        //TODO: Add permission to the data provider
         return true;
     }
 
@@ -399,20 +509,32 @@ class iZone extends PluginBase implements CommandExecutor
 
         switch($permission[1])
         {
+            case "owner":
             case "admin":
+            case "5":
                 $attachment->unsetPermission($permission[0] . ADMIN);
+                $this->dataProvider->unsetPermission($player, $permission[0] . ADMIN);
             case "moderator":
+            case "mod":
+            case "4":
                 $attachment->unsetPermission($permission[0] . MODERATOR);
+                $this->dataProvider->unsetPermission($player, $permission[0] . MODERATOR);
             case "friend":
+            case "frnd":
+            case "3":
                 $attachment->unsetPermission($permission[0] . FRIEND);
+                $this->dataProvider->unsetPermission($player, $permission[0] . FRIEND);
             case "worker":
+            case "work":
+            case "2":
                 $attachment->unsetPermission($permission[0] . WORKER);
+                $this->dataProvider->unsetPermission($player, $permission[0] . WORKER);
             default:
                 $attachment->unsetPermission($permission[0] . SPECTATOR);
+                $this->dataProvider->unsetPermission($player, $permission[0] . SPECTATOR);
                 break;
         }
 
-        //TODO: Remove permission from data provider
         return true;
     }
 
@@ -449,6 +571,22 @@ class iZone extends PluginBase implements CommandExecutor
         return true;
     }
 
+
+    /**
+     * @param DataProvider $provider
+     */
+    public function setDataProvider(DataProvider $provider)
+    {
+        $this->dataProvider = $provider;
+    }
+
+    /**
+     * @return DataProvider
+     */
+    public function getDataProvider()
+    {
+        return $this->dataProvider;
+    }
 
     /**
      * @param string $name

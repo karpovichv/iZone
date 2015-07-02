@@ -17,24 +17,33 @@ use pocketmine\Player;
 
 class DeleteMember extends PluginTask
 {
-    /** @var iZone */
-    private $_plugin;
 
+    /**
+     * @var Zone
+     */
     private $_zone;
 
     /** @var Player  */
     private $_player;
 
+    /**
+     * @param iZone $plugin
+     * @param Zone $zone
+     * @param Player $player
+     */
     public function __construct(iZone $plugin, Zone $zone, Player $player)
     {
-        $this->_plugin = $plugin;
+        parent::__construct($plugin);
         $this->_zone = $zone;
         $this->_player = $player;
     }
 
+    /**
+     * @param $currentTick
+     */
     public function onRun($currentTick)
     {
-        $this->_plugin->removePermission($this->_player, $this->_zone->getName() . ".admin");
+        $this->getOwner()->removePermission($this->_player, $this->_zone->getName() . ".admin");
         $this->_player->sendMessage("[iZone] You have been removed from the zone " . $this->_zone->getName());
     }
 }

@@ -11,7 +11,7 @@ website:
 commands:
  izone:
   description: iZone Command
-  usage: "/izone"
+  usage: "/izone <command> [parameters...] {optional...}"
   permission: izone.command.izone
 permissions:
  izone.command.izone:

@@ -12,5 +12,14 @@ explosion-radius: 8
 #Default Area Size
 default-size: 10
 
-#Data Provider[ yml, mysql, sql ]
+#Data Provider [ yml, mysql, sql, none ]
 data-provider: yml
+
+#For MySQL:
+#dataProviderSettings:
+# host: "127.0.0.1"
+# port: 3306
+# user: "user"
+# password: "password"
+# database: "databaseName"
+dataProviderSettings: []

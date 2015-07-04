@@ -62,9 +62,9 @@ class iZone extends PluginBase implements CommandExecutor
         $this->saveDefaultConfig();
         $this->reloadConfig();
 
-		$this->getServer()->getPluginManager()->registerEvents(new EventManager($this), $this);
+        $this->getServer()->getPluginManager()->registerEvents(new EventManager($this), $this);
 
-        $provider = $this->getConfig()->get("data-provider", "yml");
+        $provider = $this->getConfig()->get("data-provider", "none");
         switch(strtolower($provider))
         {
             case "mysql":
@@ -84,7 +84,7 @@ class iZone extends PluginBase implements CommandExecutor
         }
 
         $this->zones = $this->dataProvider->getAllZone();
-	}
+    }
 
 
     public function onDisable()
@@ -106,10 +106,10 @@ class iZone extends PluginBase implements CommandExecutor
      */
     public function onCommand(CommandSender $sender, Command $command, $label, array $args)
     {
-		if($command->getName() != "izone" || !($sender instanceof Player))
+        if($command->getName() != "izone" || !($sender instanceof Player))
             return false;
 
-        switch(array_shift($args))
+        switch(strtolower(array_shift($args)))
         {
             case "pos1":
                 $this->positions1[spl_object_hash($sender)] = Position::fromObject($sender, $sender->getLevel());
@@ -426,6 +426,7 @@ class iZone extends PluginBase implements CommandExecutor
             break;
 
             case "help":
+            default:
                 $sender->sendMessage("Usage: /izone <command> [parameters...] {optional...}");
                 $sender->sendMessage("Usage: /izone create [name] {int}");
                 $sender->sendMessage("Usage: /izone create [name] [x] [y] [z] ");
@@ -439,7 +440,7 @@ class iZone extends PluginBase implements CommandExecutor
         }
 
         return false;
-	}
+    }
 
     public function addPermission($player, $permission)
     {

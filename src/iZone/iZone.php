@@ -5,7 +5,6 @@ namespace iZone;
 use iZone\Event\ZoneCreatedEvent;
 use iZone\Event\ZoneRemovedEvent;
 use iZone\Event\ZoneRemovePermissionEvent;
-use iZone\Event\ZoneSetPermission;
 use iZone\Event\ZoneSetPermissionEvent;
 use iZone\Provider\DataProvider;
 use iZone\Provider\DummyProvider;
@@ -13,6 +12,7 @@ use iZone\Provider\MYSQLProvider;
 use iZone\Provider\SQLProvider;
 use iZone\Provider\YAMLProvider;
 use iZone\Task\PermissionMember;
+
 use pocketMine\command\Command;
 use pocketmine\command\CommandExecutor;
 use pocketMine\command\CommandSender;

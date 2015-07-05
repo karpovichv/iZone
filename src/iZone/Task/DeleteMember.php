@@ -43,7 +43,7 @@ class DeleteMember extends PluginTask
      */
     public function onRun($currentTick)
     {
-        $this->getOwner()->removePermission($this->_player, $this->_zone->getName() . ".admin");
+        $this->getOwner()->removePermission($this->_player, $this->_zone->getName() . ADMIN);
         $this->_player->sendMessage("[iZone] You have been removed from the zone " . $this->_zone->getName());
     }
 }

@@ -115,7 +115,10 @@ class EventManager implements Listener
         {
             if($zone->isOnRadius($event->getPosition(), $radius))
             {
-                $zone->getOwner()->sendMessage('[iZone] Something explode near zone: ' . $zone->getName());
+                $owner = $this->plugin->getServer()->getPlayer($zone->getOwner());
+                if($owner instanceof Player)
+                    $owner->sendMessage('[iZone] Something explode near zone: ' . $zone->getName());
+
                 $event->setCancelled(true);
                 break;
             }

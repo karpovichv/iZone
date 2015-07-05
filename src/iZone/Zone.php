@@ -13,12 +13,6 @@ namespace iZone;
  * Spectator:   You only can see the area
 */
 
-define("ADMIN", ".admin");
-define("MODERATOR", ".moderator");
-define("FRIEND", ".friend");
-define("WORKER", ".worker");
-define("SPECTATOR", ".spectator");
-
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\Player;
 use pocketmine\level\Position;

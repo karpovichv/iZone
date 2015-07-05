@@ -22,6 +22,13 @@ use pocketmine\Player;
 use pocketmine\permission\PermissionAttachment;
 
 
+define("ADMIN", ".admin");
+define("MODERATOR", ".moderator");
+define("FRIEND", ".friend");
+define("WORKER", ".worker");
+define("SPECTATOR", ".spectator");
+
+
 /**
  * Class iZone
  * @package iZone

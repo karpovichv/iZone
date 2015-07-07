@@ -35,6 +35,9 @@ class Zone extends AxisAlignedBB
     /** @var string */
     private $name;
 
+    /** @var  bool  */
+    public $pvpAvailable;
+
     /**
      * @param iZone $plugin
      * @param int $name
@@ -42,7 +45,7 @@ class Zone extends AxisAlignedBB
      * @param Position $pos1
      * @param Position $pos2
      */
-    public function __construct(iZone $plugin, $name, $owner, Position $pos1, Position $pos2)
+    public function __construct(iZone $plugin, $name, $owner, Position $pos1, Position $pos2, $pvpAvailable = false)
     {
         $this->plugin = $plugin;
         $this->name = $name;
@@ -58,13 +61,14 @@ class Zone extends AxisAlignedBB
         $this->owner = (($owner instanceof Player) ? $owner->getName() : $owner);
         $this->levelName = $pos1->getLevel()->getName();
 
-
         //Register owner's permissions
         if($owner instanceof Player)
         {
             $this->plugin->addPermission($owner, $name . ADMIN);
             $this->plugin->getDataProvider()->setPermission($owner, $name . ADMIN);
         }
+
+        $this->pvpAvailable = $pvpAvailable;
 
     }
 

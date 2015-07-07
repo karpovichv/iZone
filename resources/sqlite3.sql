@@ -7,7 +7,8 @@ CREATE TABLE Zones (
   minZ INTEGER,
   maxX INTEGER,
   maxY INTEGER,
-  maxZ INTEGER
+  maxZ INTEGER,
+  pvpAvailable BOOLEAN
 );
 
 CREATE TABLE Permissions (

@@ -47,7 +47,7 @@ class SQLProvider implements DataProvider
     {
         $position = $zone->getPosition();
 
-        $prepare = $this->database->prepare("INSERT INTO Zones (name, player_owner, level_name, minX, minY, minZ, maxX, maxY, maxZ) VALUES (:name, :player, :level, :minx, :miny, :minz, :maxx, :maxy, :maxz)");
+        $prepare = $this->database->prepare("INSERT INTO Zones (name, player_owner, level_name, minX, minY, minZ, maxX, maxY, maxZ, pvpAvailable) VALUES (:name, :player, :level, :minx, :miny, :minz, :maxx, :maxy, :maxz, :pvp)");
         $prepare->bindValue(":name", \SQLite3::escapeString($zone->getName()), SQLITE3_TEXT);
         $prepare->bindValue(":player", \SQLite3::escapeString($zone->getOwner()), SQLITE3_TEXT);
         $prepare->bindValue(":level", $zone->getLevelName(), SQLITE3_TEXT);
@@ -57,6 +57,7 @@ class SQLProvider implements DataProvider
         $prepare->bindValue(":maxx", $position[3], SQLITE3_INTEGER);
         $prepare->bindValue(":maxy", $position[4], SQLITE3_INTEGER);
         $prepare->bindValue(":maxz", $position[5], SQLITE3_INTEGER);
+        $prepare->bindValue(":pvp", $zone->pvpAvailable);
         $prepare->execute();
 
     }
@@ -90,7 +91,7 @@ class SQLProvider implements DataProvider
 
                 $pos1 = new Position($zone["minX"], $zone["minY"], $zone["minZ"], $level);
                 $pos2 = new Position($zone["maxX"], $zone["maxY"], $zone["maxZ"], $level);
-                $zones[$zone["name"]] = new Zone($this->plugin, $zone["name"], $zone["player_owner"], $pos1, $pos2);
+                $zones[$zone["name"]] = new Zone($this->plugin, $zone["name"], $zone["player_owner"], $pos1, $pos2, $zone["pvpAvailable"]);
             }
             return $zones;
         }

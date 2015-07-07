@@ -343,6 +343,43 @@ class iZone extends PluginBase implements CommandExecutor
                     return true;
                 }
 
+                if(strtolower($user) == "pvp")
+                {
+                    if(!$sender->isOp() && !$sender->hasPermission($name . MODERATOR))
+                    {
+                        $sender->sendMessage("[iZone] You don't have right to do that");
+                        return true;
+                    }
+
+                    if(strtolower($perm) == "on" || $perm == "1")
+                    {
+                        if(isset($this->zones[$name]))
+                        {
+                            $this->zones[$name]->pvpAvailable = true;
+                            $sender->sendMessage("[iZone] Enabled PVP in {$name}");
+                            return true;
+                        }
+                        $sender->sendMessage("[iZone] The zone {$name} does not exist!");
+                        return true;
+                    }
+                    else if(strtolower($perm == "off") || $perm == "0")
+                    {
+                        if(isset($this->zones[$name]))
+                        {
+                            $this->zones[$name]->pvpAvailable = false;
+                            $sender->sendMessage("[iZone] Disabled PVP in {$name}");
+                            return true;
+                        }
+                        $sender->sendMessage("[iZone] The zone {$name} does not exist!");
+                        return true;
+                    }
+                    else
+                    {
+                        $sender->sendMessage("Unable to identify the command");
+                        return true;
+                    }
+                }
+
                 $user = $this->getServer()->getPlayer($user);
                 if($user == null)
                 {

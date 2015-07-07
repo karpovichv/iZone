@@ -48,7 +48,8 @@ class YAMLProvider implements DataProvider
                 $zone->getName(),
                 $zone->getOwner(),
                 $zone->getLevelName(),
-                $zone->getPosition()
+                $zone->getPosition(),
+                $zone->pvpAvailable
             ]
         );
     }
@@ -59,7 +60,6 @@ class YAMLProvider implements DataProvider
         $permData = $this->permConfig->getAll(false);
         foreach($permData as $key => $value)
         {
-            var_dump($value);
             if(array_key_exists($zone->getName(), $value))
             {
                 unset($value[$zone->getName()]);
@@ -113,7 +113,7 @@ class YAMLProvider implements DataProvider
 
             $pos1 = new Position($value[3][0], $value[3][1], $value[3][2], $level);
             $pos2 = new Position($value[3][3], $value[3][4], $value[3][5], $level);
-            $zones[$value[0]] = new Zone($this->_plugin, $value[0], $value[1], $pos1, $pos2);
+            $zones[$value[0]] = new Zone($this->_plugin, $value[0], $value[1], $pos1, $pos2, $value[4]);
         }
         return $zones;
     }

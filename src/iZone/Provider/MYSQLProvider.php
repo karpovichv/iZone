@@ -64,7 +64,7 @@ class MYSQLProvider implements DataProvider
         $maxy = $position[4];
         $maxz = $position[5];
 
-        return $this->database->query("INSERT INTO izone_zones (name, player_owner, level_name, minX, minY, minZ, maxX, maxY, maxZ) VALUES ({$name}, {$player}, {$level}, {$minx}, {$miny}, {$minz}, {$maxx}, {$maxy}, {$maxz})");
+        return $this->database->query("INSERT INTO izone_zones (name, player_owner, level_name, minX, minY, minZ, maxX, maxY, maxZ, pvpAvailable) VALUES ({$name}, {$player}, {$level}, {$minx}, {$miny}, {$minz}, {$maxx}, {$maxy}, {$maxz}, {$zone->pvpAvailable})");
 
     }
 
@@ -95,7 +95,7 @@ class MYSQLProvider implements DataProvider
 
                 $pos1 = new Position($zone["minX"], $zone["minY"], $zone["minZ"], $level);
                 $pos2 = new Position($zone["maxX"], $zone["maxY"], $zone["maxZ"], $level);
-                $zones[$zone["name"]] = new Zone($this->_plugin, $zone["name"], $zone["player_owner"], $pos1, $pos2);
+                $zones[$zone["name"]] = new Zone($this->_plugin, $zone["name"], $zone["player_owner"], $pos1, $pos2, $zone["pvpAvailable"]);
             }
             return $zones;
         }

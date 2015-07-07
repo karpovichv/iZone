@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS izone_zones (
   minZ INT,
   maxX INT,
   maxY INT,
-  maxZ INT
+  maxZ INT,
+  pvpAvailable BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS izone_player_permissions (

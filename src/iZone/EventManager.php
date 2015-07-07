@@ -2,6 +2,7 @@
 
 namespace iZone;
 
+use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\inventory\InventoryPickupItemEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\block\BlockPlaceEvent;
@@ -175,6 +176,28 @@ class EventManager implements Listener
                 }
             }
         }
-}
+    }
+
+    public function onEntityDamageByEntity(EntityDamageByEntityEvent $event)
+    {
+        $damager = $event->getDamager();
+        $damaged = $event->getEntity();
+
+        if(($damager instanceof Player && !$damager->isOp())&& $damaged instanceof Player)
+        {
+            foreach ($this->plugin->getAllZones() as $zone)
+            {
+                if ($zone->isIn($damaged))
+                {
+                    if ($zone->pvpAvailable)
+                        break;
+
+                    $event->setCancelled(true);
+                    $damager->sendMessage("[iZone] You are trying to attack in a private zone");
+                    break;
+                }
+            }
+        }
+    }
 
 }

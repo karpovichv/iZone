@@ -28,6 +28,7 @@ class EventManager implements Listener
      * @param PlayerJoinEvent $event
      *
      * @priority LOWEST
+     * @ignoreCancelled true
      */
     public function onPlayerJoin(PlayerJoinEvent $event)
     {
@@ -38,7 +39,8 @@ class EventManager implements Listener
     /**
      * @param PlayerQuitEvent $event
      *
-     * @priority MONITOR
+     * @priority LOWEST
+     * @ignoreCancelled true
      */
     public function onPlayerQuit(PlayerQuitEvent $event)
     {
@@ -158,7 +160,8 @@ class EventManager implements Listener
     /**
      * @param InventoryPickupItemEvent $event
      *
-     * @priority MONITOR
+     * @priority HIGH
+     * @ignoreCancelled true
      */
     public function onPickupItem(InventoryPickupItemEvent $event)
     {
@@ -178,6 +181,12 @@ class EventManager implements Listener
         }
     }
 
+    /**
+     * @param EntityDamageByEntityEvent $event
+     *
+     * @priority HIGH
+     * @ignoreCancelled true
+     */
     public function onEntityDamageByEntity(EntityDamageByEntityEvent $event)
     {
         $damager = $event->getDamager();

@@ -13,11 +13,11 @@ use iZone\Provider\SQLProvider;
 use iZone\Provider\YAMLProvider;
 use iZone\Task\PermissionMember;
 
-use pocketMine\command\Command;
+use pocketmine\command\Command;
 use pocketmine\command\CommandExecutor;
-use pocketMine\command\CommandSender;
+use pocketmine\command\CommandSender;
 use pocketmine\level\Position;
-use pocketMine\plugin\PluginBase;
+use pocketmine\plugin\PluginBase;
 use pocketmine\Player;
 use pocketmine\permission\PermissionAttachment;
 

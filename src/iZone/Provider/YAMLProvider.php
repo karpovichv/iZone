@@ -62,10 +62,12 @@ class YAMLProvider implements DataProvider
         {
             if(array_key_exists($zone->getName(), $value))
             {
-                unset($value[$zone->getName()]);
+                unset($permData[$key][$zone->getName()]);
+                $this->permConfig->setAll($permData);
                 return true;
             }
         }
+        
         return false;
     }
 
@@ -86,6 +88,7 @@ class YAMLProvider implements DataProvider
             return false;
 
         unset($data[$zoneName]);
+        $this->permConfig->set($player->getName() .  ".permissions", $data);
         return true;
 
     }

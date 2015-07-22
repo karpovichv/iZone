@@ -389,7 +389,6 @@ class iZone extends PluginBase implements CommandExecutor
 				return true;
             break;
 
-
             case "coord":
                 $sender->sendMessage("[iZone] Coordinates: X: {$sender->x} Y: {$sender->y} Z: {$sender->z}");
                 return true;
@@ -397,13 +396,13 @@ class iZone extends PluginBase implements CommandExecutor
 
             case "help":
             default:
-                $sender->sendMessage("Usage: /izone <command> [parameters...] {optional...}");
-                $sender->sendMessage("Usage: /izone create [name] {int}");
-                $sender->sendMessage("Usage: /izone create [name] [x] [y] [z] ");
-                $sender->sendMessage("Usage: /izone create [name] [x1] [y1] [z1] [x2] [y2] [z2] ");
-                $sender->sendMessage("Usage: /izone destroy [name]");
-                $sender->sendMessage("Usage: /izone set [zone] [player] [rank] {time}");
-                $sender->sendMessage("Usage: /izone unset [zone] [player] [rank]");
+                $sender->sendMessage("Usage: /izone <command> [parameters] {optional}");
+                $sender->sendMessage("Usage: /izone create [name]");
+                $sender->sendMessage("Usage: /izone remove [name]");
+                $sender->sendMessage("Usage: /izone addmember [zone] [player] {owner}");
+                $sender->sendMessage("Usage: /izone removemember [zone] [player]");
+                $sender->sendMessage("Usage: /izone leave [zone]");
+                $sender->sendMessage("Usage: /izone setpvp [zone] [on/off]");
                 $sender->sendMessage("Usage: /izone coord");
                 return true;
             break;

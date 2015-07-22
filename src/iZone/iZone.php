@@ -11,7 +11,6 @@ use iZone\Provider\DummyProvider;
 use iZone\Provider\MYSQLProvider;
 use iZone\Provider\SQLProvider;
 use iZone\Provider\YAMLProvider;
-use iZone\Task\PermissionMember;
 
 use pocketmine\command\Command;
 use pocketmine\command\CommandExecutor;
@@ -21,12 +20,15 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\Player;
 use pocketmine\permission\PermissionAttachment;
 
+/**
+ * Area permissions:
+ *
+ * Owner:       You can add and remove members, remove the area. Yes, there could be more than one owner.
+ * Member:      You can place and break blocks, use chests, doors etc.
+*/
 
-define("ADMIN", ".admin");
-define("MODERATOR", ".moderator");
-define("FRIEND", ".friend");
-define("WORKER", ".worker");
-define("SPECTATOR", ".spectator");
+define("OWNER", ".owner");
+define("MEMBER", ".member");
 
 
 /**
@@ -138,168 +140,57 @@ class iZone extends PluginBase implements CommandExecutor
                 }
 
                 $name = array_shift($args);
-                if(empty($name) || isset($this->zones[$name]))
+                if($name == null || empty($name) || isset($this->zones[$name]))
                 {
                     $sender->sendMessage("[iZone] The zone already exist or name cannot be empty");
                     return true;
                 }
+                
+				if(!isset($this->positions1[spl_object_hash($sender)]) || !isset($this->positions2[spl_object_hash($sender)]))
+				{
+					$sender->sendMessage("[iZone] Set two positions with /izone pos1 and /izone pos2");
+					return true;
+				}
+				
+				$pos1 = $this->positions1[spl_object_hash($sender)];
+				$pos2 = $this->positions2[spl_object_hash($sender)];
+				$zone = new Zone($this, $name, $sender, $pos1, $pos2);
+				foreach($this->zones as $z)
+				{
+					if($z->intersectsWith($zone))
+					{
+						$sender->sendMessage("[iZone] You can not interfere with other zones");
+						return true;
+					}
+				}
 
+				$this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
+				if($ev->isCancelled())
+				{
+					return false;
+				}
 
-                if(count($args) == 0)
-                {
-                    if(isset($this->positions1[spl_object_hash($sender)]) && isset($this->positions2[spl_object_hash($sender)]))
-                    {
-                        $pos1 = $this->positions1[spl_object_hash($sender)];
-                        $pos2 = $this->positions2[spl_object_hash($sender)];
-                        $zone = new Zone($this, $name, $sender, $pos1, $pos2);
-                        foreach($this->zones as $z)
-                        {
-                            if($z->intersectsWith($zone))
-                            {
-                                $sender->sendMessage("[iZone] You can not interfere with other zones");
-                                return true;
-                            }
-                        }
+				$this->zones[$name] = $zone;
+				$this->dataProvider->addZone($zone);
+				$sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
+				unset($this->positions1[spl_object_hash($sender)]);
+				unset($this->positions2[spl_object_hash($sender)]);
+				return true;
+			break;
 
-                        $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
-                        if($ev->isCancelled()){
-                            return false;
-                        }
-
-                        $this->zones[$name] = $zone;
-                        $this->dataProvider->addZone($zone);
-                        $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
-                        unset($this->positions1[spl_object_hash($sender)]);
-                        unset($this->positions2[spl_object_hash($sender)]);
-                        return true;
-                    }
-
-                    $radius = $this->getConfig()->get("default-size");
-                    $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
-                    $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
-                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
-
-                    foreach($this->zones as $z)
-                    {
-                        if($z->intersectsWith($zone))
-                        {
-                            $sender->sendMessage("[iZone] You can not interfere with other zones");
-                            return true;
-                        }
-                    }
-
-                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
-                    if($ev->isCancelled()){
-                        return false;
-                    }
-
-                    $this->zones[$name] = $zone;
-                    $this->dataProvider->addZone($zone);
-                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
-                    return true;
-                }
-                elseif(count($args) == 1)
-                {
-                    $radius = intval(array_shift($args));
-                    $pos1 =  new Position($sender->x - $radius, $sender->y - $radius, $sender->z - $radius, $sender->getLevel());
-                    $pos2 =  new Position($sender->x + $radius, $sender->y + $radius, $sender->z + $radius, $sender->getLevel());
-                    $zone =  new Zone($this, $name, $sender, $pos1, $pos2);
-                    foreach($this->zones as $z)
-                    {
-                        if($z->intersectsWith($zone))
-                        {
-                            $sender->sendMessage("[iZone] You can not interfere with other zones");
-                            return true;
-                        }
-                    }
-
-                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
-                    if($ev->isCancelled()){
-                        return false;
-                    }
-
-                    $this->zones[$name] = $zone;
-                    $this->dataProvider->addZone($zone);
-                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
-                    return true;
-                }
-                elseif(count($args) == 3)
-                {
-                    $x = intval(array_shift($args));
-                    $y = intval(array_shift($args));
-                    $z = intval(array_shift($args));
-
-                    $pos2 =  new Position($x, $y, $z, $sender->getLevel());
-
-                    $zone = new Zone($this, $name, $sender, $sender, $pos2);
-                    foreach($this->zones as $z)
-                    {
-                        if($z->intersectsWith($zone))
-                        {
-                            $sender->sendMessage("[iZone] You can not interfere with other zones");
-                            return true;
-                        }
-                    }
-
-                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
-                    if($ev->isCancelled()){
-                        return false;
-                    }
-
-                    $this->zones[$name] = $zone;
-                    $this->dataProvider->addZone($zone);
-                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
-                    return true;
-                }
-                elseif(count($args) == 6)
-                {
-
-                    $x = intval(array_shift($args));
-                    $y = intval(array_shift($args));
-                    $z = intval(array_shift($args));
-
-                    $x2 = intval(array_shift($args));
-                    $y2 = intval(array_shift($args));
-                    $z2 = intval(array_shift($args));
-
-                    $pos1 =  new Position($x, $y, $z, $sender->getLevel());
-                    $pos2 =  new Position($x2, $y2, $z2, $sender->getLevel());
-
-                    $zone = new Zone($this, $name, $sender, $pos1, $pos2);
-                    foreach($this->zones as $z)
-                    {
-                        if($z->intersectsWith($zone))
-                        {
-                            $sender->sendMessage("[iZone] You can not interfere with other zones");
-                            return true;
-                        }
-                    }
-
-                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneCreatedEvent($this, $zone));
-                    if($ev->isCancelled()){
-                        return false;
-                    }
-
-                    $this->zones[$name] = $zone;
-                    $this->dataProvider->addZone($zone);
-                    $sender->sendMessage("[iZone] The zone {$name} have been have successfully created");
-
-                    return true;
-                }
-                break;
-
-            case "destroy":
+            case "remove":
                 $name = array_shift($args);
-                if(!isset($this->zones[$name]))
+                if($name == null || empty($name) || !isset($this->zones[$name]))
                 {
-                    $sender->sendMessage("[iZone] The zone {$name} doesn't exist");
+                    $sender->sendMessage("[iZone] The zone doesn't exist");
                     return true;
                 }
 
-                if($sender->isOp() || $sender->hasPermission($name . ADMIN))
+                if($sender->isOp() || $sender->hasPermission($name . OWNER))
                 {
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneRemovedEvent($this, $this->zones[$name], $sender));
-                    if($ev->isCancelled()){
+                    if($ev->isCancelled())
+                    {
                         return false;
                     }
 
@@ -324,12 +215,10 @@ class iZone extends PluginBase implements CommandExecutor
                 return true;
             break;
 
-            case "set":
-
-                $name = array_shift($args);
+            case "addmember":
+				$name = array_shift($args);
                 $user = array_shift($args);
-                $perm = array_shift($args);
-                $time = array_shift($args);
+                $as = array_shift($args);
 
                 if(empty($name) || $name == null || !isset($this->zones[$name]))
                 {
@@ -337,75 +226,32 @@ class iZone extends PluginBase implements CommandExecutor
                     return true;
                 }
 
-                if(empty($user) || $user == null)
+				if($sender->isOp() || $sender->hasPermission($name . OWNER))
                 {
-                    $sender->sendMessage("[iZone] The player name cannot be empty");
-                    return true;
-                }
-
-                if(strtolower($user) == "pvp")
-                {
-                    if(!$sender->isOp() && !$sender->hasPermission($name . MODERATOR))
-                    {
-                        $sender->sendMessage("[iZone] You don't have right to do that");
-                        return true;
-                    }
-
-                    if(strtolower($perm) == "on" || $perm == "1")
-                    {
-                        if(isset($this->zones[$name]))
-                        {
-                            $this->zones[$name]->pvpAvailable = true;
-                            $sender->sendMessage("[iZone] Enabled PVP in {$name}");
-                            return true;
-                        }
-                        $sender->sendMessage("[iZone] The zone {$name} does not exist!");
-                        return true;
-                    }
-                    else if(strtolower($perm == "off") || $perm == "0")
-                    {
-                        if(isset($this->zones[$name]))
-                        {
-                            $this->zones[$name]->pvpAvailable = false;
-                            $sender->sendMessage("[iZone] Disabled PVP in {$name}");
-                            return true;
-                        }
-                        $sender->sendMessage("[iZone] The zone {$name} does not exist!");
-                        return true;
-                    }
-                    else
-                    {
-                        $sender->sendMessage("Unable to identify the command");
-                        return true;
-                    }
-                }
-
-                $user = $this->getServer()->getPlayer($user);
-                if($user == null)
-                {
-                    $sender->sendMessage("[iZone] The player does not exist or is online");
-                    return true;
-                }
-
-
-                if($sender->isOp() || $sender->hasPermission($name . MODERATOR))
-                {
-                    $perm = $name . "." . $perm;
+					if(empty($user) || $user == null || ($user = $this->getServer()->getPlayer($user)) == null)
+					{
+						$sender->sendMessage("[iZone] The player doesn't exist or is offline!");
+						return true;
+					}
+					
+					if($user->hasPermission($name . MEMBER))
+					{
+						//Force them to remove the member mannually
+						$sender->sendMessage("[iZone] The player is already member of this zone!");
+						return true;
+					}
+					
+                    $perm = ($as == "owner") ? $name . OWNER : $name . MEMBER;
 
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneSetPermissionEvent($this, $this->zones[$name], $user, $perm));
-                    if($ev->isCancelled()){
+                    if($ev->isCancelled())
+                    {
                         return false;
                     }
 
-                    $this->removePermission($user, $name .  ADMIN);
                     $this->addPermission($user, $perm);
                     $this->dataProvider->setPermission($user, $perm);
-
-
-                    if($time != null)
-                        $this->getServer()->getScheduler()->scheduleDelayedTask(new PermissionMember($this, $this->getZone($name), $user, $name . SPECTATOR), 20 * $time);
-
-                    $sender->sendMessage("[iZone] The player has been added!");
+					$sender->sendMessage("[iZone] The player has been added!");
                     return true;
                 }
 
@@ -413,54 +259,134 @@ class iZone extends PluginBase implements CommandExecutor
                 return true;
             break;
 
-            case "unset":
+            case "removemember":
                 $name = array_shift($args);
                 $user = array_shift($args);
-                $permission = array_shift($args);
 
                 if($name == null || empty($name) || !isset($this->zones[$name]))
                 {
-                    $sender->sendMessage("[iZone] The zone don't exist");
+                    $sender->sendMessage("[iZone] The zone doesn't exist");
                     return true;
                 }
 
-
-                if($user == null || empty($user))
+                if($sender->isOp() || $sender->hasPermission($name . OWNER))
                 {
-                    $sender->sendMessage("[iZone] The player name cannot be empty");
-                    return true;
-                }
+					if($user == null || empty($user) || ($user = $this->getServer()->getPlayer($user)) == null)
+					{
+						$sender->sendMessage("[iZone] The player doesn't exist or not is offline!");
+						return true;
+					}
+					
+					if(!$user->hasPermission($name . MEMBER))
+					{
+						$sender->sendMessage("[iZone] The player is not a member of this zone!");
+						return true;
+					}
+					
+					$ownerName = $this->zones[$name]->getOwner();
+					
+					if($user->getName() == $ownerName)
+					{
+						$sender->sendMessage("[iZone] The owner couldn't be removed from the zone!");
+						return true;
+					} 
+					
+					$isOwner = $user->hasPermission($name . OWNER);
+					
+					if($isOwner && $sender->getName() != $ownerName)
+					{
+						$sender->sendMessage("[iZone] You can't remove an owner!");
+						return true;
+					}
 
-                if($permission == null || empty($permission))
-                {
-                    $sender->sendMessage("[iZone] The permission that you are trying to remove from player can't be empty");
-                    return true;
-                }
-
-                $user = $this->getServer()->getPlayer($user);
-                if($user == null)
-                {
-                    $sender->sendMessage("The player don't exist or not is online!");
-                    return true;
-                }
-
-                if($sender->isOp() || $sender->hasPermission($name . MODERATOR))
-                {
-                    $permission = $name . "." . $permission;
+                    $permission = ($isOwner) ? $name . OWNER : $name . MEMBER;
 
                     $this->getServer()->getPluginManager()->callEvent($ev = new ZoneRemovePermissionEvent($this, $this->zones[$name], $user, $permission));
-                    if($ev->isCancelled()){
+                    if($ev->isCancelled())
+                    {
                         return false;
                     }
 
                     $this->removePermission($user, $permission);
-                    $this->dataProvider->unsetPermission($user, $permission);
+                    $this->dataProvider->unsetPermission($user, $this->zones[$name]);
                     $sender->sendMessage("[iZone] The player has been removed!");
                     return true;
                 }
 
                 $sender->sendMessage("[iZone] You don't have permission to do that");
                 return true;
+            break;
+            
+            case "leave":
+				$name = array_shift($args);
+				
+				if($name == null || empty($name) || !isset($this->zones[$name]))
+                {
+                    $sender->sendMessage("[iZone] The zone doesn't exist");
+                    return true;
+                }
+                
+                if($sender->hasPermission($name . MEMBER))
+				{
+					if($this->zones[$name]->getOwner() == $sender->getName())
+					{
+						$sender->sendMessage("[iZone] You can't leave your own zone!");
+						return true;
+					}
+					
+					$permission = ($sender->hasPermission($name . OWNER)) ? $name . OWNER : $name . MEMBER;
+
+                    $this->getServer()->getPluginManager()->callEvent($ev = new ZoneRemovePermissionEvent($this, $this->zones[$name], $sender, $permission));
+                    if($ev->isCancelled())
+                    {
+                        return false;
+                    }
+
+                    $this->removePermission($sender, $permission);
+                    $this->dataProvider->unsetPermission($sender, $this->zones[$name]);
+                    $sender->sendMessage("[iZone] You have left the zone!");
+                    return true;
+				}
+				
+				$sender->sendMessage("[iZone] You are not a member of this zone!");
+				return true;
+            break;
+            
+            case "setpvp":
+				$name = array_shift($args);
+                $state = array_shift($args);
+                
+                if(!$sender->isOp() && !$sender->hasPermission($name . OWNER))
+				{
+					$sender->sendMessage("[iZone] You don't have right to do that");
+					return true;
+				}
+
+				if(strtolower($state) == "on" || $state == "1")
+				{
+					if(isset($this->zones[$name]))
+					{
+						$this->zones[$name]->pvpAvailable = true;
+						$sender->sendMessage("[iZone] Enabled PVP in {$name}");
+						return true;
+					}
+					$sender->sendMessage("[iZone] The zone {$name} does not exist!");
+					return true;
+				}
+				else if(strtolower($state == "off") || $state == "0")
+				{
+					if(isset($this->zones[$name]))
+					{
+						$this->zones[$name]->pvpAvailable = false;
+						$sender->sendMessage("[iZone] Disabled PVP in {$name}");
+						return true;
+					}
+					$sender->sendMessage("[iZone] The zone {$name} does not exist!");
+					return true;
+				}
+				
+				$sender->sendMessage("[iZone] Unable to identify the command");
+				return true;
             break;
 
 
@@ -494,81 +420,40 @@ class iZone extends PluginBase implements CommandExecutor
             $this->getLogger()->error("Unable to find player {$player} while trying to add permission");
             return false;
         }
-
+        
         $attachment = &$this->playersAttachment[spl_object_hash($player)];
         $permission = explode(".", $permission);
-        if(count($permission) != 2)
-        {
-            $this->getLogger()->error("Error parsing permission");
-            return false;
-        }
-
+        
         switch($permission[1])
         {
             case "owner":
-            case "admin":
-            case "5":
-                $attachment->setPermission($permission[0] . ADMIN, true);
-            case "moderator":
-            case "mod":
-            case "4":
-                $attachment->setPermission($permission[0] . MODERATOR, true);
-            case "friend":
-            case "frnd":
-            case "3":
-                $attachment->setPermission($permission[0] . FRIEND, true);
-            case "worker":
-            case "work":
-            case "2":
-                $attachment->setPermission($permission[0] . WORKER, true);
+                $attachment->setPermission($permission[0] . OWNER, true);
             default:
-                $attachment->setPermission($permission[0] . SPECTATOR, true);
+                $attachment->setPermission($permission[0] . MEMBER, true);
                 break;
         }
         return true;
     }
-
     public function removePermission($player, $permission)
     {
         $player = ($player instanceof Player ? $player : $this->getServer()->getPlayer($player));
         if($player == null || empty($player))
         {
-            $this->getLogger()->error("Unable to find player while trying to remove permission.");
+            $this->getLogger()->error("Unable to find player {$player} while trying to remove permission");
             return false;
         }
-
+        
         $attachment = &$this->playersAttachment[spl_object_hash($player)];
         $permission = explode(".", $permission);
-        if(count($permission) != 2)
-        {
-            $this->getLogger()->error("Error parsing permission");
-            return false;
-        }
-
-
+        
         switch($permission[1])
         {
             case "owner":
-            case "admin":
-            case "5":
-                $attachment->unsetPermission($permission[0] . ADMIN);
-            case "moderator":
-            case "mod":
-            case "4":
-                $attachment->unsetPermission($permission[0] . MODERATOR);
-            case "friend":
-            case "frnd":
-            case "3":
-                $attachment->unsetPermission($permission[0] . FRIEND);
-            case "worker":
-            case "work":
-            case "2":
-                $attachment->unsetPermission($permission[0] . WORKER);
+                $attachment->unsetPermission($permission[0] . OWNER);
             default:
-                $attachment->unsetPermission($permission[0] . SPECTATOR);
+                $attachment->unsetPermission($permission[0] . MEMBER);
                 break;
         }
-
         return true;
     }
 
@@ -611,33 +496,6 @@ class iZone extends PluginBase implements CommandExecutor
         $player->removeAttachment($this->playersAttachment[spl_object_hash($player)]);
         unset($this->playersAttachment[spl_object_hash($player)]);
         return true;
-    }
-
-
-    public function getRank($rank)
-    {
-        switch($rank)
-        {
-            case "owner":
-            case "admin":
-            case "5":
-                return ADMIN;
-            case "moderator":
-            case "mod":
-            case "4":
-                return MODERATOR;
-            case "friend":
-            case "frnd":
-            case "3":
-                return FRIEND;
-            case "worker":
-            case "work":
-            case "2":
-                return WORKER;
-            default:
-                return SPECTATOR;
-                break;
-        }
     }
 
     /**

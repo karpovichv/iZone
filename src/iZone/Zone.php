@@ -1,18 +1,6 @@
 <?php
 namespace iZone;
 
-
-/**
- * Mini Rank System
- *  - These ranks can be granted for a specified time (In Seconds)
- *
- * Admin:       No need to explain
- * Moderator:   You can place, destroy and activate block. You can kick and add guest to the area.
- * Friend:      You can place,destroy and activate block in the area, but you can't add guest to the area
- * Worker:      You can place and destroy
- * Spectator:   You only can see the area
-*/
-
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\Player;
 use pocketmine\level\Position;
@@ -64,8 +52,8 @@ class Zone extends AxisAlignedBB
         //Register owner's permissions
         if($owner instanceof Player)
         {
-            $this->plugin->addPermission($owner, $name . ADMIN);
-            $this->plugin->getDataProvider()->setPermission($owner, $name . ADMIN);
+            $this->plugin->addPermission($owner, $name . OWNER);
+            $this->plugin->getDataProvider()->setPermission($owner, $name . OWNER);
         }
 
         $this->pvpAvailable = $pvpAvailable;

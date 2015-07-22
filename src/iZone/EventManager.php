@@ -64,7 +64,7 @@ class EventManager implements Listener
         {
             if($zone->isIn($event->getBlock()))
             {
-                if($player->hasPermission($zone->getName() . WORKER))
+                if($player->hasPermission($zone->getName() . MEMBER))
                     break;
 
                 $event->setCancelled(true);
@@ -91,7 +91,7 @@ class EventManager implements Listener
         {
             if($zone->isIn($event->getBlock()))
             {
-                if($player->hasPermission($zone->getName() . WORKER))
+                if($player->hasPermission($zone->getName() . MEMBER))
                     break;
 
                 $event->setCancelled(true);
@@ -146,7 +146,7 @@ class EventManager implements Listener
 
         foreach ($this->plugin->getAllZones() as $zone) {
             if ($zone->isIn($event->getBlock())) {
-                if ($player->hasPermission($zone->getName() . FRIEND))
+                if ($player->hasPermission($zone->getName() . MEMBER))
                     break;
 
                 $event->setCancelled(true);
@@ -170,7 +170,7 @@ class EventManager implements Listener
         {
             foreach ($this->plugin->getAllZones() as $zone) {
                 if ($zone->isIn($event->getItem())) {
-                    if ($player->hasPermission($zone->getName() . FRIEND))
+                    if ($player->hasPermission($zone->getName() . MEMBER))
                         break;
 
                     $event->setCancelled(true);

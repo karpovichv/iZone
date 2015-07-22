@@ -154,6 +154,23 @@ class iZone extends PluginBase implements CommandExecutor
 				
 				$pos1 = $this->positions1[spl_object_hash($sender)];
 				$pos2 = $this->positions2[spl_object_hash($sender)];
+				
+				if(abs($pos1->getX() - $pos2->getX()) > $this->getConfig()->get("maximum-x", 30))
+				{
+					$sender->sendMessage("[iZone] The area has exceeded the maximum x-length!");
+                    return true;
+				}
+				else if(abs($pos1->getY() - $pos2->getY()) > $this->getConfig()->get("maximum-y", 30))
+				{
+					$sender->sendMessage("[iZone] The area has exceeded the maximum y-height!");
+                    return true;
+				}
+				else if(abs($pos1->getZ() - $pos2->getZ()) > $this->getConfig()->get("maximum-z", 30))
+				{
+					$sender->sendMessage("[iZone] The area has exceeded the maximum z-width!");
+                    return true;
+				}
+				
 				$zone = new Zone($this, $name, $sender, $pos1, $pos2);
 				foreach($this->zones as $z)
 				{

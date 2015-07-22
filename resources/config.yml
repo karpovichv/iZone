@@ -1,7 +1,7 @@
 #Config file of iZone plugin
 
 #if normal player can create private areas
-non-op-create: false
+non-op-create: true
 
 #Protect from exploxion
 protect-from-explosion: true
@@ -9,8 +9,14 @@ protect-from-explosion: true
 #Explosion Radius Protection
 explosion-radius: 8
 
-#Default Area Size
-default-size: 10
+#Maximum x-length of the area
+maximum-x: 30
+
+#Maximum y-height of the area
+maximum-y: 30
+
+#Maximum z-width of the area
+maximum-z: 30
 
 #Data Provider [ yml, mysql, sql, none ]
 data-provider: yml

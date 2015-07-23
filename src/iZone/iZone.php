@@ -155,20 +155,29 @@ class iZone extends PluginBase implements CommandExecutor
 				$pos1 = $this->positions1[spl_object_hash($sender)];
 				$pos2 = $this->positions2[spl_object_hash($sender)];
 				
-				if(abs($pos1->getX() - $pos2->getX()) > $this->getConfig()->get("maximum-x", 30))
+				if(strtolower(array_shift($args)) == "noheight")
 				{
-					$sender->sendMessage("[iZone] The area has exceeded the maximum x-length!");
-                    return true;
+					$pos1->y = 0;
+					$pos2->y = 256;
 				}
-				else if(abs($pos1->getY() - $pos2->getY()) > $this->getConfig()->get("maximum-y", 30))
+				
+				if(!$sender->isOp())
 				{
-					$sender->sendMessage("[iZone] The area has exceeded the maximum y-height!");
-                    return true;
-				}
-				else if(abs($pos1->getZ() - $pos2->getZ()) > $this->getConfig()->get("maximum-z", 30))
-				{
-					$sender->sendMessage("[iZone] The area has exceeded the maximum z-width!");
-                    return true;
+					if(abs($pos1->getX() - $pos2->getX()) > $this->getConfig()->get("maximum-x", 30))
+					{
+						$sender->sendMessage("[iZone] The area has exceeded the maximum x-length!");
+						return true;
+					}
+					else if(abs($pos1->getY() - $pos2->getY()) > $this->getConfig()->get("maximum-y", 30))
+					{
+						$sender->sendMessage("[iZone] The area has exceeded the maximum y-height!");
+						return true;
+					}
+					else if(abs($pos1->getZ() - $pos2->getZ()) > $this->getConfig()->get("maximum-z", 30))
+					{
+						$sender->sendMessage("[iZone] The area has exceeded the maximum z-width!");
+						return true;
+					}
 				}
 				
 				$zone = new Zone($this, $name, $sender, $pos1, $pos2);
@@ -414,7 +423,7 @@ class iZone extends PluginBase implements CommandExecutor
             case "help":
             default:
                 $sender->sendMessage("Usage: /izone <command> [parameters] {optional}");
-                $sender->sendMessage("Usage: /izone create [name]");
+                $sender->sendMessage("Usage: /izone create [name] {noheight}");
                 $sender->sendMessage("Usage: /izone remove [name]");
                 $sender->sendMessage("Usage: /izone addmember [zone] [player] {owner}");
                 $sender->sendMessage("Usage: /izone removemember [zone] [player]");
